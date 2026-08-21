@@ -39,21 +39,26 @@ self.onmessage = async (e) => {
 
     if (type === 'analyzeTargetTiles') {
       // メイン画像をタイル分割して各タイルの平均色を返す
+      // 比率を正確に保つため、端数の出る幅も余さずカバーする（小数タイル対応）
       const { data, width, height, gridSize } = payload;
-      const tileW = Math.floor(width / gridSize);
-      const tileH = Math.floor(height / gridSize);
+      const tileWF = width / gridSize;
+      const tileHF = height / gridSize;
       const tiles = [];
       for (let y = 0; y < gridSize; y++) {
         for (let x = 0; x < gridSize; x++) {
-          const sx = x * tileW;
-          const sy = y * tileH;
+          const x0 = Math.floor(x * tileWF);
+          const x1 = Math.floor((x + 1) * tileWF);
+          const y0 = Math.floor(y * tileHF);
+          const y1 = Math.floor((y + 1) * tileHF);
+          const tileW = Math.max(1, x1 - x0);
+          const tileH = Math.max(1, y1 - y0);
           // タイル内の平均色
           let r = 0, g = 0, b = 0, count = 0;
-          // サンプリング間隔
+          // サンプリング間隔（端数タイルでも余白なくカバー）
           for (let ty = 0; ty < tileH; ty += 2) {
             for (let tx = 0; tx < tileW; tx += 2) {
-              const px = sx + tx;
-              const py = sy + ty;
+              const px = x0 + tx;
+              const py = y0 + ty;
               if (px >= width || py >= height) continue;
               const idx = (py * width + px) * 4;
               r += data[idx];

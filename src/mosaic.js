@@ -85,10 +85,10 @@ export function selectBestMaterial(tile, materials, usageCount, placed, opts) {
  */
 export async function drawMosaic(canvas, tiles, placements, materials, opts, onProgress) {
   const { gridSize, blendStrength, exportScale, targetWidth, targetHeight } = opts;
-  const tileW = targetWidth / gridSize;
-  const tileH = targetHeight / gridSize;
+  const tileWF = targetWidth / gridSize;
+  const tileHF = targetHeight / gridSize;
 
-  // キャンバスサイズを出力解像度に合わせて設定
+  // キャンバスサイズを出力解像度に合わせて設定（元画像の比率を完全維持）
   canvas.width = Math.round(targetWidth * exportScale);
   canvas.height = Math.round(targetHeight * exportScale);
   const ctx = canvas.getContext('2d');
@@ -98,7 +98,6 @@ export async function drawMosaic(canvas, tiles, placements, materials, opts, onP
   ctx.fillStyle = '#08080c';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 素材画像のキャッシュ: 事前に縮小したImageBitmapを作っておくと速いが、ここでは直接描画
   const scale = exportScale;
   const blendAlpha = blendStrength / 100;
 
@@ -108,10 +107,15 @@ export async function drawMosaic(canvas, tiles, placements, materials, opts, onP
     const mat = materials.find(m => m.index === matIndex);
     if (!mat || !mat.img) continue;
 
-    const x = (tile.x * tileW) * scale;
-    const y = (tile.y * tileH) * scale;
-    const w = tileW * scale;
-    const h = tileH * scale;
+    // 比率維持のため、端数ピクセルも余さず敷き詰める（workerと同ロジック）
+    const x0 = Math.floor(tile.x * tileWF * scale);
+    const x1 = Math.floor((tile.x + 1) * tileWF * scale);
+    const y0 = Math.floor(tile.y * tileHF * scale);
+    const y1 = Math.floor((tile.y + 1) * tileHF * scale);
+    const x = x0;
+    const y = y0;
+    const w = Math.max(1, x1 - x0);
+    const h = Math.max(1, y1 - y0);
 
     // 素材画像をタイル領域にカバー描画（中央クロップ）
     const img = mat.img;

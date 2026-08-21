@@ -49,7 +49,8 @@ function parseArgs() {
     talent: null,
     splitByChannel: false,
     skipExisting: false,
-    dryRun: false
+    dryRun: false,
+    filters: []
   };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--playlist') opts.playlist = args[++i];
@@ -60,6 +61,7 @@ function parseArgs() {
     else if (args[i] === '--split-by-channel') opts.splitByChannel = true;
     else if (args[i] === '--skip-existing') opts.skipExisting = true;
     else if (args[i] === '--dry-run') opts.dryRun = true;
+    else if (args[i] === '--filter') opts.filters.push(args[++i]);
     else if (args[i] === '--max') opts.maxResults = parseInt(args[++i], 10);
     else if (args[i] === '--help' || args[i] === '-h') {
       console.log(`
@@ -68,16 +70,17 @@ function parseArgs() {
   YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --playlist PLxxxx --split-by-channel --skip-existing
   YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --channel UCxxxx --talent "あくび・でもんすぺーど"
 
-オプション:
-  --playlist  プレイリストID (PL... または URLから抽出)
-  --video-ids カンマ区切りの動画ID
-  --channel   チャンネルID (そのチャンネルのアップロード動画を取得)
-  --talent    タレント名（フォルダ分け用、例: "甘狼このみ"）— 指定すると out/<タレント名>/ に保存
-  --split-by-channel  混合プレイリストを channelTitle ごとに自動でタレント別フォルダへ分割
-  --skip-existing     既存の _index.json / metadata.json を参照し重複 videoId をスキップ（追記マージ）
-  --dry-run           取得せず件数のみ表示（重複チェックの確認用）
-  --out       出力フォルダ (default: local-materials/thumbnails)
-  --max       最大取得件数 (default: 1000)
+ オプション:
+   --playlist  プレイリストID (PL... または URLから抽出)
+   --video-ids カンマ区切りの動画ID
+   --channel   チャンネルID (そのチャンネルのアップロード動画を取得)
+   --talent    タレント名（フォルダ分け用、例: "甘狼このみ"）— 指定すると out/<タレント名>/ に保存
+   --split-by-channel  混合プレイリストを channelTitle ごとに自動でタレント別フォルダへ分割
+   --skip-existing     既存の _index.json / metadata.json を参照し重複 videoId をスキップ（追記マージ）
+   --dry-run           取得せず件数のみ表示（重複チェックの確認用）
+   --filter    タイトルフィルタ（例: --filter "歌枠" --filter "初配信" でOR条件）
+   --out       出力フォルダ (default: local-materials/thumbnails)
+   --max       最大取得件数 (default: 1000)
        `);
       process.exit(0);
     }
@@ -279,10 +282,24 @@ async function main() {
   const details = await getVideoDetails(filteredIds);
   console.log(`[OK] 詳細取得完了: ${details.length}件`);
 
+  // フィルタ: タイトルに指定文字列を含むもののみ（OR条件）
+  let filteredDetails = details;
+  if (opts.filters.length > 0) {
+    const before = details.length;
+    filteredDetails = details.filter(v => opts.filters.some(f => v.snippet.title.includes(f)));
+    console.log(`[INFO] タイトルフィルタ ${opts.filters.join(' / ')}: ${before}件中 ${filteredDetails.length}件が該当`);
+    if (filteredDetails.length === 0) {
+      console.log('[INFO] フィルタに一致する動画がありません');
+      return;
+    }
+  } else {
+    filteredDetails = details;
+  }
+
   // グループ分け: split-by-channel なら channelTitle ごと、そうでなければ単一
   const groups = new Map(); // outDir -> { details: [], talentName }
   if (opts.splitByChannel) {
-    for (const v of details) {
+    for (const v of filteredDetails) {
       const talentName = resolveTalent(v.snippet.channelTitle, null);
       const safe = sanitize(talentName);
       const outDir = path.join(baseOut, safe);
@@ -294,9 +311,9 @@ async function main() {
       console.log(`  - ${g.talentName} (${path.basename(dir)}): ${g.details.length}件`);
     }
   } else if (singleOut) {
-    groups.set(singleOut, { details, talentName: opts.talent });
+    groups.set(singleOut, { details: filteredDetails, talentName: opts.talent });
   } else {
-    groups.set(baseOut, { details, talentName: opts.talent || null });
+    groups.set(baseOut, { details: filteredDetails, talentName: opts.talent || null });
   }
 
   let globalSuccess = 0, globalFailed = 0, globalSkipped = 0;
