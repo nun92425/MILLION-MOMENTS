@@ -155,7 +155,8 @@ async function loadExistingIndex(baseOut) {
     try {
       const idx = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
       for (const id of idx.videoIds || []) existingIds.add(id);
-      return { existingIds, indexPath, byTalent: idx.byTalent || {} };
+      for (const id of idx.blockedIds || []) existingIds.add(id);
+      return { existingIds, indexPath, byTalent: idx.byTalent || {}, blockedIds: idx.blockedIds || [] };
     } catch {}
   }
   // なければ各 metadata.json を走査
@@ -181,10 +182,19 @@ async function loadExistingIndex(baseOut) {
 
 async function saveIndex(baseOut, existingIds, talentStats) {
   const indexPath = path.join(baseOut, '_index.json');
+  // 既存の blockedIds を保持
+  let blockedIds = [];
+  if (fs.existsSync(indexPath)) {
+    try { blockedIds = JSON.parse(fs.readFileSync(indexPath, 'utf-8')).blockedIds || []; } catch {}
+  }
+  // blockedIds は existingIds から除外して総数計算（totalは実際のファイル数）
+  const blockedSet = new Set(blockedIds);
+  const total = Array.from(existingIds).filter(id => !blockedSet.has(id)).length;
   const data = {
     updatedAt: new Date().toISOString(),
-    total: existingIds.size,
-    videoIds: Array.from(existingIds).sort(),
+    total,
+    videoIds: Array.from(existingIds).filter(id => !blockedSet.has(id)).sort(),
+    blockedIds,
     byTalent: talentStats
   };
   await fs.promises.writeFile(indexPath, JSON.stringify(data, null, 2), 'utf-8');
