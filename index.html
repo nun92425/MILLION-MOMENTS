@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MILLION MOMENTS - フォトモザイク生成ツール</title>
+  <meta name="description" content="無数の瞬間が、一つの景色になる。ブラウザで完結するフォトモザイク生成ツール" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1 class="logo">MILLION MOMENTS</h1>
+      <p class="tagline">無数の瞬間が、一つの景色になる。</p>
+      <nav class="header-nav">
+        <a href="#howto" class="nav-link">使い方</a>
+        <a href="#about" class="nav-link">作品について</a>
+        <a href="https://github.com/nun92425/MILLION-MOMENTS" target="_blank" rel="noopener" class="nav-link">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- 注意書き -->
+    <section class="notice">
+      <p class="notice-text">
+        <strong>非公式ファンメイド作品 / ツールです。</strong> 公式とは関係ありません。<br>
+        素材画像はご自身で用意したもの、または利用条件を確認したもののみを使用してください。本ツールは画像をサーバーに送信しません。すべての処理はお使いのブラウザ内で完結します。
+      </p>
+    </section>
+
+    <!-- ステップインジケーター -->
+    <section class="steps">
+      <div class="step" data-step="1"><span class="step-num">1</span><span class="step-label">メイン画像</span></div>
+      <div class="step-arrow">→</div>
+      <div class="step" data-step="2"><span class="step-num">2</span><span class="step-label">素材画像</span></div>
+      <div class="step-arrow">→</div>
+      <div class="step" data-step="3"><span class="step-num">3</span><span class="step-label">生成</span></div>
+      <div class="step-arrow">→</div>
+      <div class="step" data-step="4"><span class="step-num">4</span><span class="step-label">保存・共有</span></div>
+    </section>
+
+    <div class="layout">
+      <!-- 左パネル: 設定 -->
+      <aside class="panel panel-left">
+        <!-- 1. メイン画像 -->
+        <section class="card" id="target-section">
+          <h2 class="card-title"><span class="card-num">1</span> メイン画像 <span class="required">必須</span></h2>
+          <p class="card-desc">モザイクの完成形となる画像を1枚選んでください。遠くから見た時の絵になります。</p>
+          <label class="dropzone" id="target-dropzone">
+            <input type="file" id="target-input" accept="image/*" hidden />
+            <div class="dropzone-content" id="target-placeholder">
+              <span class="dropzone-icon">🖼️</span>
+              <span class="dropzone-text">クリックまたはドラッグ&ドロップ</span>
+              <span class="dropzone-sub">JPG / PNG / WebP</span>
+            </div>
+            <img id="target-preview" class="preview-img hidden" alt="メイン画像プレビュー" />
+          </label>
+          <div class="file-info" id="target-info"></div>
+          <button class="btn btn-ghost btn-sm hidden" id="target-clear">クリア</button>
+        </section>
+
+        <!-- 2. 素材画像 -->
+        <section class="card" id="material-section">
+          <h2 class="card-title"><span class="card-num">2</span> 素材画像 <span class="required">必須</span></h2>
+          <p class="card-desc">モザイクを構成する小さな画像を複数選んでください。数百〜数千枚推奨。多いほど綺麗になります。</p>
+          <label class="dropzone" id="material-dropzone">
+            <input type="file" id="material-input" accept="image/*" multiple hidden />
+            <div class="dropzone-content">
+              <span class="dropzone-icon">🎞️</span>
+              <span class="dropzone-text">クリックまたはドラッグ&ドロップ</span>
+              <span class="dropzone-sub">複数選択可 / フォルダごと可</span>
+            </div>
+          </label>
+          <div class="material-stats" id="material-stats">
+            <span id="material-count">0 枚</span>
+            <span class="stats-sep">|</span>
+            <span id="material-status">素材を選択してください</span>
+          </div>
+          <div class="material-grid" id="material-grid"></div>
+          <div class="material-actions">
+            <button class="btn btn-ghost btn-sm" id="material-clear" disabled>全クリア</button>
+            <button class="btn btn-ghost btn-sm" id="material-shuffle" disabled>シャッフル表示</button>
+          </div>
+          <details class="details">
+            <summary>ローカル素材フォルダについて</summary>
+            <p class="details-text">
+              PCで開発時のみ: <code>local-materials/</code> フォルダに画像を置くと、<code>npm run dev</code> で自動的に読み込めます（一般公開には含まれません）。<br>
+              YouTubeサムネは <code>YOUTUBE_API_KEY=xxx npm run fetch:thumbnails</code> で自動取得できます。詳しくはREADMEを参照。
+            </p>
+          </details>
+        </section>
+
+        <!-- 3. 設定 -->
+        <section class="card" id="settings-section">
+          <h2 class="card-title"><span class="card-num">3</span> 設定</h2>
+
+          <div class="setting">
+            <label class="setting-label">
+              タイル数（細かさ）
+              <span class="setting-value" id="grid-value">80 × 80 = 6,400 マス</span>
+            </label>
+            <input type="range" id="grid-size" min="30" max="150" value="80" step="10" class="slider" />
+            <div class="setting-hint">
+              <span>粗い（軽い）</span><span>細かい（重い・綺麗）</span>
+            </div>
+            <p class="setting-desc">多いほど拡大した時の発見体験が楽しくなりますが、生成に時間がかかります。最初は80がおすすめ。</p>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">
+              色補正の強さ
+              <span class="setting-value" id="blend-value">30%</span>
+            </label>
+            <input type="range" id="blend-strength" min="0" max="80" value="30" step="10" class="slider" />
+            <p class="setting-desc">素材画像にメイン画像の色をどれだけ重ねるか。0%で素材そのまま、高いほど全体の色が整います。</p>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">
+              同じ画像の連続使用を避ける
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="avoid-duplicate" checked />
+              <span class="toggle-slider"></span>
+              <span class="toggle-text">ON（推奨）- 隣り合うマスで同じ素材が並ばないようにする</span>
+            </label>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">使用回数ペナルティ（多様性）</label>
+            <label class="toggle">
+              <input type="checkbox" id="use-penalty" checked />
+              <span class="toggle-slider"></span>
+              <span class="toggle-text">ON（推奨）- 同じ画像ばかり使われないようにする</span>
+            </label>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">出力解像度</label>
+            <select id="export-scale" class="select">
+              <option value="1">1x - 標準（速い）</option>
+              <option value="2" selected>2x - 高解像度（推奨）</option>
+              <option value="3">3x - 超高解像度（重い）</option>
+            </select>
+            <p class="setting-desc">大きいほどX投稿時に拡大しても綺麗ですが、保存に時間がかかります。</p>
+          </div>
+
+          <div class="setting">
+            <button class="btn btn-primary btn-large" id="generate-btn" disabled>
+              <span class="btn-icon">✨</span> モザイクを生成する
+            </button>
+            <p class="setting-desc" id="generate-hint">メイン画像と素材画像を選択してください</p>
+          </div>
+
+          <div class="progress hidden" id="progress">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <p class="progress-text" id="progress-text">解析中...</p>
+          </div>
+        </section>
+      </aside>
+
+      <!-- 右パネル: プレビュー・結果 -->
+      <section class="panel panel-right">
+        <div class="canvas-card">
+          <div class="canvas-header">
+            <h2 class="card-title">プレビュー</h2>
+            <div class="canvas-controls">
+              <button class="btn btn-ghost btn-sm" id="zoom-out" title="縮小">−</button>
+              <span class="zoom-level" id="zoom-level">100%</span>
+              <button class="btn btn-ghost btn-sm" id="zoom-in" title="拡大">＋</button>
+              <button class="btn btn-ghost btn-sm" id="zoom-reset" title="リセット">リセット</button>
+              <button class="btn btn-ghost btn-sm" id="fit-btn" title="全体表示">全体表示</button>
+            </div>
+          </div>
+          <div class="canvas-wrapper" id="canvas-wrapper">
+            <canvas id="mosaic-canvas" class="hidden"></canvas>
+            <div class="canvas-placeholder" id="canvas-placeholder">
+              <p class="placeholder-icon">🎨</p>
+              <p class="placeholder-text">ここに完成したモザイクが表示されます</p>
+              <p class="placeholder-sub">「モザイクを生成する」を押してください</p>
+            </div>
+          </div>
+          <div class="canvas-footer hidden" id="canvas-footer">
+            <p class="canvas-info" id="canvas-info"></p>
+            <div class="canvas-actions">
+              <button class="btn btn-primary" id="download-btn">💾 画像を保存（PNG）</button>
+              <button class="btn btn-ghost" id="compare-btn">↔ 元画像と比較</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card hidden" id="result-card">
+          <h3 class="card-title">生成結果</h3>
+          <div class="result-stats" id="result-stats"></div>
+          <p class="card-desc">
+            遠くから見ると一枚の絵、近づくと無数の瞬間。拡大して「あの配信だ！」を探してみてください。
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- 使い方 -->
+    <section class="card howto" id="howto">
+      <h2 class="card-title">使い方</h2>
+      <ol class="howto-list">
+        <li><strong>メイン画像を選ぶ:</strong> 完成させたい絵を1枚選びます。明暗がはっきりした画像が向いています。</li>
+        <li><strong>素材画像を選ぶ:</strong> 配信サムネやスクショなど、モザイクの粒になる画像を大量に選びます。フォルダごとドラッグ&ドロップできます。</li>
+        <li><strong>タイル数を調整:</strong> 細かいほど綺麗ですが重くなります。素材が1000枚なら80-100、500枚なら60-80が目安。</li>
+        <li><strong>生成:</strong> ボタンを押すとブラウザ内で自動計算。数千マスでも1-2分程度。</li>
+        <li><strong>保存・共有:</strong> PNGで保存し、Xなどでファンアートとして投稿。超高解像度の原寸配布は避け、全体像+拡大切り抜きの投稿がおすすめです。</li>
+      </ol>
+    </section>
+
+    <section class="card about" id="about">
+      <h2 class="card-title">MILLION MOMENTS について</h2>
+      <p class="card-desc">
+        <strong>「無数の瞬間が、一つの景色になる。」</strong><br>
+        一つ一つの配信、一つの動画、一つの思い出。小さな瞬間が集まり、今の景色を作っている。<br>
+        本ツールはその考えを、フォトモザイクの構造そのもので表現するために作られました。<br>
+        詳細は <a href="https://github.com/nun92425/MILLION-MOMENTS/blob/main/企画書.md" target="_blank">企画書</a> をご覧ください。
+      </p>
+      <p class="card-desc" style="margin-top:1rem; font-size:0.85rem; opacity:0.8;">
+        本サイトはサーバーに画像を送信しません。数百〜数千枚の画像処理もブラウザ内で完結し、RenderのStatic Siteとして無料で運用されています。
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>MILLION MOMENTS — 非公式ファンメイドツール | Built with Vite + Canvas API | 画像はブラウザ内でのみ処理されます</p>
+    <p class="footer-sub">素材の利用条件は各権利者のガイドラインに従ってください。本ツール自体はMITライセンスで公開予定</p>
+  </footer>
+
+  <!-- 比較モーダル -->
+  <dialog id="compare-dialog" class="dialog">
+    <div class="dialog-inner">
+      <h3>元画像と比較</h3>
+      <div class="compare-grid">
+        <div><p class="compare-label">元画像</p><img id="compare-original" alt="元画像" /></div>
+        <div><p class="compare-label">モザイク</p><img id="compare-mosaic" alt="モザイク" /></div>
+      </div>
+      <button class="btn btn-ghost" id="compare-close">閉じる</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

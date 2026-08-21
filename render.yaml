@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: million-moments
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    # 絶対にlocal-materialsはデプロイしない（.gitignoreでも除外済み、二重保険）
+    # Render Static Siteはgitの内容をデプロイするため、local-materialsがgitに含まれていなければ自動的に除外される
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

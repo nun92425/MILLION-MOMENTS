@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+
+# ローカル専用素材（絶対にRender/Gitに含めない）
+local-materials/
+local-materials/**
+.DS_Store
+Thumbs.db
+
+# OS / Editor
+.vscode/
+.idea/
+*.log
