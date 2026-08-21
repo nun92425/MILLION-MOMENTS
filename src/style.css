@@ -349,6 +349,77 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .toggle input:checked + .toggle-slider::after { transform: translateX(16px); }
 .toggle-text { font-size: 0.75rem; color: var(--text-soft); line-height: 1.5; }
 
+/* Resolution preview + 4K badge */
+.resolution-preview {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+.resolution-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+.resolution-row:last-of-type { margin-bottom: 0; }
+.resolution-label { color: var(--muted); font-weight: 600; min-width: 70px; }
+.resolution-value { color: var(--text); font-weight: 700; flex: 1; }
+.badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.badge.active {
+  background: linear-gradient(135deg, #6e7cff, #8a5cff);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(110,124,255,0.35);
+}
+.resolution-hint {
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.resolution-hint.good { color: #6e7cff; font-weight: 600; }
+.resolution-hint.ok { color: #2ecc71; }
+.resolution-hint.warn { color: #e6a23c; }
+.setting-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+/* Time estimate */
+.time-estimate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.73rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.time-icon { color: var(--muted); display: grid; place-items: center; flex-shrink: 0; }
+.time-text { color: var(--text-soft); }
+
 /* Buttons - more refined */
 .btn {
   appearance: none;

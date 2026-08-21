@@ -59,6 +59,13 @@ const blendValueEl = document.getElementById('blend-value');
 const avoidDuplicateEl = document.getElementById('avoid-duplicate');
 const usePenaltyEl = document.getElementById('use-penalty');
 const exportScaleEl = document.getElementById('export-scale');
+const baseResolutionEl = document.getElementById('base-resolution');
+const exportFormatEl = document.getElementById('export-format');
+const outputSizeEl = document.getElementById('output-size');
+const badge4kEl = document.getElementById('badge-4k');
+const tileSizeEl = document.getElementById('tile-size');
+const resolutionHintEl = document.getElementById('resolution-hint');
+const timeTextEl = document.getElementById('time-text');
 
 const generateBtn = document.getElementById('generate-btn');
 const generateHint = document.getElementById('generate-hint');
@@ -106,6 +113,78 @@ function updateGenerateBtn() {
   else if (materials.length === 0) generateHint.textContent = '素材画像を選択してください';
   else generateHint.textContent = `${materials.length}枚の素材で ${gridSizeEl.value}×${gridSizeEl.value} のモザイクを生成します`;
   updateSteps();
+  updateResolutionPreview();
+  updateTimeEstimate();
+}
+
+function updateResolutionPreview() {
+  if (!baseResolutionEl || !outputSizeEl) return;
+  const base = parseInt(baseResolutionEl.value) || 1200;
+  const scale = parseInt(exportScaleEl.value) || 2;
+  const grid = parseInt(gridSizeEl.value) || 80;
+  // メイン画像があればアスペクト比を反映、なければ正方形想定
+  let baseW = base, baseH = base;
+  if (targetImg) {
+    const r = targetImg.width / targetImg.height;
+    if (r >= 1) { baseW = base; baseH = Math.round(base / r); }
+    else { baseH = base; baseW = Math.round(base * r); }
+  }
+  const outW = baseW * scale;
+  const outH = baseH * scale;
+  outputSizeEl.textContent = `${outW.toLocaleString()} × ${outH.toLocaleString()} px`;
+  const tilePx = Math.round((base / grid) * scale);
+  tileSizeEl.textContent = `${tilePx} × ${tilePx} px`;
+  const longSide = Math.max(outW, outH);
+  const is4k = longSide >= 3840;
+  badge4kEl.classList.toggle('active', is4k);
+  badge4kEl.textContent = is4k ? '4K 対応' : '4K 未満';
+  if (is4k) {
+    resolutionHintEl.textContent = 'Xで「4Kを読み込む」が表示され、拡大しても鮮明です。PNGは5MB超の場合はJPEG推奨。';
+    resolutionHintEl.className = 'resolution-hint good';
+  } else if (longSide >= 3000) {
+    resolutionHintEl.textContent = '高解像度。Xでも十分鮮明。4Kにするにはベース1600以上×3x、または2000×2x以上。';
+    resolutionHintEl.className = 'resolution-hint ok';
+  } else if (longSide >= 2000) {
+    resolutionHintEl.textContent = '標準的な鮮明さ。1タイルをもっとはっきり見たいならベースを上げて4Kを目指してください。';
+    resolutionHintEl.className = 'resolution-hint';
+  } else {
+    resolutionHintEl.textContent = '軽量ですが拡大するとやや粗くなります。素材の顔をはっきり見たいなら1200px以上推奨。';
+    resolutionHintEl.className = 'resolution-hint warn';
+  }
+}
+
+function updateTimeEstimate() {
+  if (!timeTextEl) return;
+  if (!targetImg || materials.length === 0) {
+    timeTextEl.textContent = 'メイン画像と素材を選択すると目安が表示されます';
+    return;
+  }
+  const grid = parseInt(gridSizeEl.value) || 80;
+  const base = parseInt(baseResolutionEl.value) || 1200;
+  const scale = parseInt(exportScaleEl.value) || 2;
+  const tiles = grid * grid;
+  const basePixels = base * base; // 正方形近似
+  const matCount = materials.length;
+  // 経験式：タイル数、素材数、ピクセル数、スケールで推定
+  // 800px/6400マス/500枚/2x で約18秒を基準にスケール
+  let sec = 2 + tiles * 0.0035 + Math.min(tiles * matCount * 0.000006, 25) + basePixels / 700000 * 3 + (scale - 1) * 1.2;
+  // 4Kは描画が重いので追加
+  const longSide = base * scale;
+  if (longSide >= 3840) sec += 8;
+  if (longSide >= 5000) sec += 10;
+  // 過去実績で補正
+  try {
+    const hist = JSON.parse(localStorage.getItem('mm-time-hist') || '[]');
+    if (hist.length > 0) {
+      const avgFactor = hist.reduce((s, h) => s + (h.actual / h.estimated), 0) / hist.length;
+      if (avgFactor > 0.5 && avgFactor < 2) sec *= avgFactor * 0.3 + 0.7; // 30%だけ補正
+    }
+  } catch {}
+  const min = Math.max(5, Math.round(sec * 0.7));
+  const max = Math.round(sec * 1.4);
+  const fmt = (s) => s < 60 ? `${s}秒` : `${Math.floor(s/60)}分${s%60 ? (s%60)+'秒' : ''}`;
+  const warn = longSide >= 3840 ? '（PC推奨・スマホでは重い場合あり）' : (tiles >= 10000 ? '（少し時間がかかります）' : '');
+  timeTextEl.textContent = `目安: 約${fmt(min)}〜${fmt(max)} ${warn}`;
 }
 
 function loadImage(file) {
@@ -274,6 +353,8 @@ gridSizeEl.addEventListener('input', () => {
 blendEl.addEventListener('input', () => {
   blendValueEl.textContent = blendEl.value + '%';
 });
+if (baseResolutionEl) baseResolutionEl.addEventListener('change', () => { updateResolutionPreview(); updateTimeEstimate(); });
+if (exportScaleEl) exportScaleEl.addEventListener('change', () => { updateResolutionPreview(); updateTimeEstimate(); });
 
 // 生成メイン
 generateBtn.addEventListener('click', async () => {
@@ -293,15 +374,22 @@ generateBtn.addEventListener('click', async () => {
   // Canvas上限チェック
   const targetWidth = targetBitmapData.originalWidth || targetImg.width;
   const targetHeight = targetBitmapData.originalHeight || targetImg.height;
-  // アスペクト比を維持しつつ、長辺を800px相当に正規化してからタイル分割する方式に
-  // 実際はターゲット画像の元サイズをそのままタイル分割に使うと巨大になるため、800px基準にリスケール
-  const maxSide = 800;
+  const baseResolution = parseInt(baseResolutionEl.value) || 1200;
+  const maxSide = baseResolution;
   const scale = Math.min(1, maxSide / Math.max(targetImg.width, targetImg.height));
   const normW = Math.round(targetImg.width * scale);
   const normH = Math.round(targetImg.height * scale);
   // gridSizeは正方形だが、画像が長方形なら短辺側をアスペクト比で調整
   // 簡易的に正方形グリッドで全領域をカバー
 
+  const outLongSide = Math.max(Math.round(targetImg.width * Math.min(1, maxSide / Math.max(targetImg.width, targetImg.height))) * exportScale,
+                         Math.round(targetImg.height * Math.min(1, maxSide / Math.max(targetImg.width, targetImg.height))) * exportScale);
+  if (outLongSide > 8192) {
+    if (!confirm(`出力が ${outLongSide}px と非常に大きく、ブラウザが重くなる可能性があります。続行しますか？（4Kは3840pxで十分です）`)) return;
+  }
+  if (outLongSide >= 3840 && !confirm(`4K出力（長辺${outLongSide}px）は生成に1〜3分、PNGは10MB超になる場合があります。JPEG保存も選べます。続行しますか？`)) return;
+
+  const genStart = performance.now();
   generateBtn.disabled = true;
   progressEl.classList.remove('hidden');
   progressFill.style.width = '0%';
@@ -391,6 +479,25 @@ generateBtn.addEventListener('click', async () => {
     // 比較用にデータURLを保持
     lastMosaicDataUrl = canvas.toDataURL('image/png');
 
+    // 所要時間の実績を保存（見積もり補正用）
+    try {
+      const actualSec = Math.round((performance.now() - genStart) / 1000);
+      // estimateを再計算して保存
+      const grid = parseInt(gridSizeEl.value) || 80;
+      const base = parseInt(baseResolutionEl.value) || 1200;
+      const scale = parseInt(exportScaleEl.value) || 2;
+      const tiles = grid * grid;
+      const basePixels = base * base;
+      let est = 2 + tiles * 0.0035 + Math.min(tiles * materials.length * 0.000006, 25) + basePixels / 700000 * 3 + (scale - 1) * 1.2;
+      const longSide = base * scale;
+      if (longSide >= 3840) est += 8;
+      est = Math.round(est);
+      const hist = JSON.parse(localStorage.getItem('mm-time-hist') || '[]');
+      hist.push({ estimated: est, actual: actualSec, tiles, base, scale, at: Date.now() });
+      if (hist.length > 20) hist.shift();
+      localStorage.setItem('mm-time-hist', JSON.stringify(hist));
+    } catch {}
+
     setTimeout(() => {
       progressEl.classList.add('hidden');
       generateBtn.disabled = false;
@@ -453,17 +560,34 @@ canvasWrapper.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
-// 保存
+// 保存（PNG/JPEG選択対応・4Kサイズ対策）
 downloadBtn.addEventListener('click', () => {
   if (canvas.classList.contains('hidden')) return;
+  const fmt = exportFormatEl ? exportFormatEl.value : 'png';
+  const mime = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const ext = fmt === 'jpeg' ? 'jpg' : 'png';
+  const quality = fmt === 'jpeg' ? 0.92 : undefined;
+  // ボタンのテキストを一時変更
+  const origText = downloadBtn.innerHTML;
+  downloadBtn.textContent = '保存中...';
+  downloadBtn.disabled = true;
   canvas.toBlob((blob) => {
+    if (!blob) { downloadBtn.innerHTML = origText; downloadBtn.disabled = false; return; }
+    // 4Kで5MB超の警告（PNG）
+    if (blob.size > 5 * 1024 * 1024 && fmt === 'png') {
+      const mb = (blob.size / (1024*1024)).toFixed(1);
+      resolutionHintEl.textContent = `PNGで${mb}MBと大きいため、X投稿にはJPEG（高品質）がおすすめです。下の保存形式をJPEGに切り替えて再保存してください。`;
+      resolutionHintEl.className = 'resolution-hint warn';
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `million-moments-${Date.now()}.png`;
+    a.download = `million-moments-${Date.now()}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
-  }, 'image/png');
+    downloadBtn.innerHTML = origText;
+    downloadBtn.disabled = false;
+  }, mime, quality);
 });
 
 // 比較
@@ -494,20 +618,32 @@ try {
   if (saved.gridSize) { gridSizeEl.value = saved.gridSize; gridSizeEl.dispatchEvent(new Event('input')); }
   if (saved.blend) { blendEl.value = saved.blend; blendEl.dispatchEvent(new Event('input')); }
   if (saved.exportScale) exportScaleEl.value = saved.exportScale;
+  if (saved.baseResolution && baseResolutionEl) baseResolutionEl.value = saved.baseResolution;
+  if (saved.exportFormat && exportFormatEl) exportFormatEl.value = saved.exportFormat;
   if (saved.avoidDuplicate !== undefined) avoidDuplicateEl.checked = saved.avoidDuplicate;
   if (saved.usePenalty !== undefined) usePenaltyEl.checked = saved.usePenalty;
+  updateResolutionPreview();
+  updateTimeEstimate();
 } catch {}
 // 保存
 ['change','input'].forEach(ev => {
-  [gridSizeEl, blendEl, exportScaleEl, avoidDuplicateEl, usePenaltyEl].forEach(el => {
+  [gridSizeEl, blendEl, exportScaleEl, baseResolutionEl, exportFormatEl, avoidDuplicateEl, usePenaltyEl].forEach(el => {
+    if (!el) return;
     el.addEventListener(ev, () => {
       localStorage.setItem('mm-settings', JSON.stringify({
         gridSize: gridSizeEl.value,
         blend: blendEl.value,
         exportScale: exportScaleEl.value,
+        baseResolution: baseResolutionEl ? baseResolutionEl.value : '1200',
+        exportFormat: exportFormatEl ? exportFormatEl.value : 'png',
         avoidDuplicate: avoidDuplicateEl.checked,
         usePenalty: usePenaltyEl.checked
       }));
+      updateResolutionPreview();
+      updateTimeEstimate();
     });
   });
 });
+// 初回表示のプレビュー更新
+updateResolutionPreview();
+updateTimeEstimate();

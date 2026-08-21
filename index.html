@@ -128,13 +128,52 @@
           </div>
 
           <div class="setting">
-            <label class="setting-label">出力解像度</label>
+            <label class="setting-label">ベース解像度 <span class="setting-tag">鮮明さに直結</span></label>
+            <select id="base-resolution" class="select">
+              <option value="800">800px - 軽量（スマホ向け）</option>
+              <option value="1200" selected>1200px - 標準（推奨）</option>
+              <option value="1600">1600px - 高精細</option>
+              <option value="2000">2000px - 超高精細（PC推奨）</option>
+            </select>
+            <p class="setting-desc">大きいほど1タイルが鮮明に。2000pxは4K出力時に最適です。</p>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">出力倍率</label>
             <select id="export-scale" class="select">
               <option value="1">1x - 標準（速い）</option>
-              <option value="2" selected>2x - 高解像度（推奨）</option>
-              <option value="3">3x - 超高解像度（重い）</option>
+              <option value="2" selected>2x - 高解像度</option>
+              <option value="3">3x - 超高解像度</option>
+              <option value="4">4x - 4K対応（重い）</option>
             </select>
-            <p class="setting-desc">大きいほど拡大しても綺麗ですが、保存に時間がかかります。</p>
+            <p class="setting-desc">ベース×倍率が出力サイズ。4Kは長辺3840px以上で点灯します。</p>
+          </div>
+
+          <div class="resolution-preview" id="resolution-preview">
+            <div class="resolution-row">
+              <span class="resolution-label">出力サイズ</span>
+              <span class="resolution-value" id="output-size">—</span>
+              <span class="badge" id="badge-4k">4K</span>
+            </div>
+            <div class="resolution-row">
+              <span class="resolution-label">1タイル</span>
+              <span class="resolution-value" id="tile-size">—</span>
+            </div>
+            <p class="resolution-hint" id="resolution-hint"></p>
+          </div>
+
+          <div class="setting">
+            <label class="setting-label">保存形式</label>
+            <select id="export-format" class="select">
+              <option value="png" selected>PNG - 無劣化（高品質・大容量）</option>
+              <option value="jpeg">JPEG - 高品質（4K投稿向け・軽量）</option>
+            </select>
+            <p class="setting-desc">4Kで5MBを超える場合はJPEGがおすすめ（Xの上限対策）。</p>
+          </div>
+
+          <div class="time-estimate" id="time-estimate">
+            <span class="time-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+            <span class="time-text" id="time-text">メイン画像と素材を選択すると目安が表示されます</span>
           </div>
 
           <div class="setting">
