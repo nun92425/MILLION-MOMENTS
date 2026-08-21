@@ -370,7 +370,7 @@ generateBtn.addEventListener('click', async () => {
     canvasFooter.classList.remove('hidden');
     resultCard.classList.remove('hidden');
 
-    // ズームをフィット
+    // 自然にフィット（拡大しない）
     fitCanvas();
     progressFill.style.width = '100%';
     progressText.textContent = '完成！';
@@ -394,9 +394,7 @@ generateBtn.addEventListener('click', async () => {
     setTimeout(() => {
       progressEl.classList.add('hidden');
       generateBtn.disabled = false;
-      // キャンバスへスクロール
-      canvasWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 800);
+    }, 600);
 
   } catch (err) {
     console.error(err);
@@ -405,27 +403,25 @@ generateBtn.addEventListener('click', async () => {
   }
 });
 
-// ズーム
+// ズーム - 自然な幅ベース（transformで拡大しない）
 let currentZoom = 1;
 function applyZoom() {
-  canvas.style.transform = `scale(${currentZoom})`;
-  canvas.style.transformOrigin = 'top left';
+  // widthで拡大率を表現。100%でコンテナにフィット、200%で2倍でスクロール可能
+  canvas.style.width = currentZoom <= 1 ? '100%' : (currentZoom * 100) + '%';
+  canvas.style.maxWidth = currentZoom <= 1 ? '100%' : 'none';
   zoomLevelEl.textContent = Math.round(currentZoom * 100) + '%';
 }
-zoomIn.addEventListener('click', () => { currentZoom = Math.min(4, currentZoom + 0.25); applyZoom(); });
-zoomOut.addEventListener('click', () => { currentZoom = Math.max(0.25, currentZoom - 0.25); applyZoom(); });
+zoomIn.addEventListener('click', () => { currentZoom = Math.min(3, Math.round((currentZoom + 0.25)*100)/100); applyZoom(); });
+zoomOut.addEventListener('click', () => { currentZoom = Math.max(0.5, Math.round((currentZoom - 0.25)*100)/100); applyZoom(); });
 zoomReset.addEventListener('click', () => { currentZoom = 1; applyZoom(); canvasWrapper.scrollLeft = 0; canvasWrapper.scrollTop = 0; });
 function fitCanvas() {
   if (canvas.classList.contains('hidden')) return;
-  const wrapperW = canvasWrapper.clientWidth - 32;
-  const scaleX = wrapperW / canvas.width;
-  currentZoom = Math.min(1, scaleX);
-  // 小さい画像は100%で
-  if (canvas.width < wrapperW) currentZoom = 1;
+  currentZoom = 1;
   applyZoom();
+  canvasWrapper.scrollLeft = 0;
+  canvasWrapper.scrollTop = 0;
 }
 fitBtn.addEventListener('click', fitCanvas);
-window.addEventListener('resize', fitCanvas);
 
 // マウスホイールズーム + ドラッグパン
 let isDragging = false, startX, startY, scrollLeft, scrollTop;
