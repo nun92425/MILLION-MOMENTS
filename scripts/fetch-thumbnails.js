@@ -114,44 +114,44 @@ async function main() {
 
   API_KEY = process.env.YOUTUBE_API_KEY;
   if (!API_KEY) {
-    console.error('❌ YOUTUBE_API_KEY 環境変数を設定してください');
+    console.error('[ERROR] YOUTUBE_API_KEY 環境変数を設定してください');
     console.error('   例: YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --playlist PLxxxx');
     console.error('   取得方法: https://console.cloud.google.com/apis/credentials でAPIキーを作成し、YouTube Data API v3を有効化');
     process.exit(1);
   }
 
-  console.log('🎬 MILLION MOMENTS - サムネ取得開始');
+  console.log('MILLION MOMENTS - サムネ取得開始');
   console.log(`   出力: ${opts.out}`);
   await fs.promises.mkdir(opts.out, { recursive: true });
 
   let videoIds = [];
   if (opts.videoIds) {
     videoIds = opts.videoIds.split(',').map(s => s.trim()).filter(Boolean);
-    console.log(`📋 動画ID指定: ${videoIds.length}件`);
+    console.log(`[INFO] 動画ID指定: ${videoIds.length}件`);
   } else if (opts.playlist) {
-    console.log(`📋 プレイリスト取得: ${opts.playlist}`);
+    console.log(`[INFO] プレイリスト取得: ${opts.playlist}`);
     videoIds = await getPlaylistVideoIds(opts.playlist, opts.maxResults);
-    console.log(`✅ プレイリストから ${videoIds.length}件取得`);
+    console.log(`[OK] プレイリストから ${videoIds.length}件取得`);
   } else if (opts.channel) {
-    console.log(`📋 チャンネル取得: ${opts.channel}`);
+    console.log(`[INFO] チャンネル取得: ${opts.channel}`);
     const uploadsId = await getUploadsPlaylistId(opts.channel);
     console.log(`   アップロード用プレイリスト: ${uploadsId}`);
     videoIds = await getPlaylistVideoIds(uploadsId, opts.maxResults);
-    console.log(`✅ チャンネル動画 ${videoIds.length}件取得`);
+    console.log(`[OK] チャンネル動画 ${videoIds.length}件取得`);
   } else {
-    console.error('❌ --playlist, --video-ids, --channel のいずれかを指定してください');
+    console.error('[ERROR] --playlist, --video-ids, --channel のいずれかを指定してください');
     console.error('   例: node scripts/fetch-thumbnails.js --playlist PLxxxx');
     process.exit(1);
   }
 
   if (videoIds.length === 0) {
-    console.log('⚠️ 取得する動画がありません');
+    console.log('[WARN] 取得する動画がありません');
     return;
   }
 
-  console.log(`📡 動画詳細を取得中... (${videoIds.length}件)`);
+  console.log(`[INFO] 動画詳細を取得中... (${videoIds.length}件)`);
   const details = await getVideoDetails(videoIds);
-  console.log(`✅ 詳細取得完了: ${details.length}件`);
+  console.log(`[OK] 詳細取得完了: ${details.length}件`);
 
   const metadata = [];
   let success = 0, failed = 0;
@@ -160,7 +160,7 @@ async function main() {
     const v = details[i];
     const thumbUrl = pickBestThumbnail(v.snippet.thumbnails);
     if (!thumbUrl) {
-      console.warn(`⚠️ サムネなし: ${v.id} ${v.snippet.title}`);
+      console.warn(`[WARN] サムネなし: ${v.id} ${v.snippet.title}`);
       failed++;
       continue;
     }
@@ -172,9 +172,9 @@ async function main() {
     try {
       await downloadImage(thumbUrl, dest);
       success++;
-      console.log(`  [${i+1}/${details.length}] ✅ ${v.snippet.title.slice(0,40)} -> ${filename}`);
+      console.log(`  [${i+1}/${details.length}] [OK] ${v.snippet.title.slice(0,40)} -> ${filename}`);
     } catch (err) {
-      console.warn(`  [${i+1}/${details.length}] ❌ ${v.id}: ${err.message}`);
+      console.warn(`  [${i+1}/${details.length}] [FAIL] ${v.id}: ${err.message}`);
       failed++;
     }
     metadata.push({
@@ -192,13 +192,13 @@ async function main() {
 
   const metaPath = path.join(opts.out, 'metadata.json');
   await fs.promises.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf-8');
-  console.log(`\n🎉 完了: 成功 ${success}件 / 失敗 ${failed}件`);
+  console.log(`\n[完了] 成功 ${success}件 / 失敗 ${failed}件`);
   console.log(`   画像: ${opts.out}/`);
   console.log(`   メタデータ: ${metaPath}`);
-  console.log(`\n💡 次のステップ: ブラウザで http://localhost:5173 を開き、素材画像として ${opts.out} の画像を選択してください`);
+  console.log(`\n次のステップ: ブラウザで http://localhost:5173 を開き、素材画像として ${opts.out} の画像を選択してください`);
 }
 
 main().catch(err => {
-  console.error('❌ エラー:', err.message);
+  console.error('[ERROR]', err.message);
   process.exit(1);
 });

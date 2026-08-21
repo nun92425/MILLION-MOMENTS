@@ -100,7 +100,10 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   gap: 10px;
   align-items: flex-start;
 }
-.notice-icon { font-size: 1rem; line-height: 1.5; }
+.notice-icon { display: grid; place-items: center; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.dropzone-icon { display: grid; place-items: center; color: var(--muted); }
+.btn-icon { display: inline-flex; align-items: center; line-height: 0; }
+.placeholder-icon { display: grid; place-items: center; color: var(--muted); margin: 0 auto; width: 36px; height: 36px; }
 .notice-text {
   margin: 0;
   font-size: 0.78rem;
@@ -431,7 +434,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   image-rendering: auto;
 }
 .canvas-placeholder { text-align: center; padding: 36px 16px; color: var(--muted); }
-.placeholder-icon { font-size: 2rem; margin: 0; opacity: 0.8; }
+
 .placeholder-text { margin: 8px 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--text-soft); }
 .placeholder-sub { margin: 0; font-size: 0.74rem; color: var(--muted); }
 .canvas-footer {
@@ -515,18 +518,31 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   gap: 10px;
 }
 .related-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 14px;
+  padding: 12px;
   transition: all 0.15s;
   text-decoration: none;
+  gap: 0;
 }
 .related-card:hover { border-color: var(--accent-border); background: var(--surface-3); text-decoration: none; transform: translateY(-1px); }
+.related-card-logo {
+  width: 100%;
+  height: 56px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.related-card-body { flex: 1; display: flex; flex-direction: column; }
 .related-card-title { font-size: 0.78rem; font-weight: 700; color: var(--text); margin: 0 0 4px; }
-.related-card-desc { font-size: 0.7rem; color: var(--muted); margin: 0; line-height: 1.6; }
-.related-card-arrow { font-size: 0.68rem; color: var(--accent); margin-top: 6px; display: block; }
+.related-card-desc { font-size: 0.7rem; color: var(--muted); margin: 0; line-height: 1.6; flex: 1; }
+.related-card-arrow { font-size: 0.68rem; color: var(--accent); margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
 
 /* Dialog */
 .dialog {
