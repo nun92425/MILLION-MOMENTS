@@ -60,6 +60,15 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--text);
+  display: flex;
+  align-items: center;
+}
+.logo-img {
+  height: 32px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  display: block;
 }
 .tagline {
   margin: 0;
@@ -638,6 +647,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   .panel-right { position: static; }
   .header-inner { padding: 12px 14px; gap: 10px; }
   .logo { font-size: 1.15rem; }
+  .logo-img { height: 26px; max-width: 150px; }
   .tagline { font-size: 0.7rem; }
   .main { padding: 12px 12px 0; }
   .steps { gap: 4px; }

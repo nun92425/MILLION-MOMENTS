@@ -18,27 +18,29 @@ let API_KEY = process.env.YOUTUBE_API_KEY;
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const opts = { playlist: null, videoIds: null, channel: null, out: 'local-materials/thumbnails', maxResults: 500 };
+  const opts = { playlist: null, videoIds: null, channel: null, out: 'local-materials/thumbnails', maxResults: 500, talent: null };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--playlist') opts.playlist = args[++i];
     else if (args[i] === '--video-ids') opts.videoIds = args[++i];
     else if (args[i] === '--channel') opts.channel = args[++i];
     else if (args[i] === '--out') opts.out = args[++i];
+    else if (args[i] === '--talent') opts.talent = args[++i];
     else if (args[i] === '--max') opts.maxResults = parseInt(args[++i], 10);
     else if (args[i] === '--help' || args[i] === '-h') {
-      console.log(`
+    console.log(`
 使い方:
-  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --playlist PLxxxx
-  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --video-ids id1,id2
-  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --channel UCxxxx
+  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --playlist PLxxxx --talent "甘狼このみ"
+  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --video-ids id1,id2 --talent "音ノ乃のの"
+  YOUTUBE_API_KEY=xxx node scripts/fetch-thumbnails.js --channel UCxxxx --talent "あくび・でもんすぺーど"
 
 オプション:
   --playlist  プレイリストID (PL... または URLから抽出)
   --video-ids カンマ区切りの動画ID
   --channel   チャンネルID (そのチャンネルのアップロード動画を取得)
+  --talent    タレント名（フォルダ分け用、例: "甘狼このみ"）— 指定すると out/<タレント名>/ に保存
   --out       出力フォルダ (default: local-materials/thumbnails)
   --max       最大取得件数 (default: 500)
-      `);
+       `);
       process.exit(0);
     }
   }
@@ -120,7 +122,13 @@ async function main() {
     process.exit(1);
   }
 
+  // タレント名が指定されていればサブフォルダに振り分け
+  if (opts.talent) {
+    const safeTalent = opts.talent.replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF_-]/g, '_');
+    opts.out = path.join(opts.out, safeTalent);
+  }
   console.log('MILLION MOMENTS - サムネ取得開始');
+  if (opts.talent) console.log(`   タレント: ${opts.talent}`);
   console.log(`   出力: ${opts.out}`);
   await fs.promises.mkdir(opts.out, { recursive: true });
 
@@ -181,6 +189,7 @@ async function main() {
       videoId: v.id,
       title: v.snippet.title,
       channelTitle: v.snippet.channelTitle,
+      talent: opts.talent || v.snippet.channelTitle,
       publishedAt: v.snippet.publishedAt,
       thumbnailUrl: thumbUrl,
       localFile: filename,
