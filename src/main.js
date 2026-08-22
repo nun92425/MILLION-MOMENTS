@@ -586,13 +586,14 @@ canvasWrapper.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
-// 保存（PNG/JPEG選択対応・4Kサイズ対策）
+// 保存（PNG/JPEG/WebP選択対応・4Kサイズ対策）
 downloadBtn.addEventListener('click', () => {
   if (canvas.classList.contains('hidden')) return;
   const fmt = exportFormatEl ? exportFormatEl.value : 'png';
-  const mime = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
-  const ext = fmt === 'jpeg' ? 'jpg' : 'png';
-  const quality = fmt === 'jpeg' ? 0.92 : undefined;
+  let mime, ext, quality;
+  if (fmt === 'jpeg') { mime = 'image/jpeg'; ext = 'jpg'; quality = 0.92; }
+  else if (fmt === 'webp') { mime = 'image/webp'; ext = 'webp'; quality = 0.92; }
+  else { mime = 'image/png'; ext = 'png'; quality = undefined; }
   // ボタンのテキストを一時変更
   const origText = downloadBtn.innerHTML;
   downloadBtn.textContent = '保存中...';
@@ -602,7 +603,7 @@ downloadBtn.addEventListener('click', () => {
     // 4Kで5MB超の警告（PNG）
     if (blob.size > 5 * 1024 * 1024 && fmt === 'png') {
       const mb = (blob.size / (1024*1024)).toFixed(1);
-      resolutionHintEl.textContent = `PNGで${mb}MBと大きいため、X投稿にはJPEG（高品質）がおすすめです。下の保存形式をJPEGに切り替えて再保存してください。`;
+      resolutionHintEl.textContent = `PNGで${mb}MBと大きいため、X投稿にはJPEG/WebP（高品質）がおすすめです。下の保存形式を切り替えて再保存してください。`;
       resolutionHintEl.className = 'resolution-hint warn';
     }
     const url = URL.createObjectURL(blob);

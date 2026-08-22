@@ -64,7 +64,7 @@
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>
               </span>
               <span class="dropzone-text">クリックまたはドラッグ&ドロップ</span>
-              <span class="dropzone-sub">JPG / PNG / WebP</span>
+              <span class="dropzone-sub">JPG / PNG / WebP 対応</span>
             </div>
             <img id="target-preview" class="preview-img hidden" alt="メイン画像プレビュー" />
           </label>
@@ -82,7 +82,7 @@
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
               </span>
               <span class="dropzone-text">クリックまたはドラッグ&ドロップ</span>
-              <span class="dropzone-sub">複数選択可 / フォルダごと可</span>
+              <span class="dropzone-sub">JPG / PNG / WebP 対応・複数選択可</span>
             </div>
           </label>
           <div class="material-stats" id="material-stats">
@@ -180,8 +180,9 @@
             <select id="export-format" class="select">
               <option value="png" selected>PNG - 無劣化（高品質・大容量）</option>
               <option value="jpeg">JPEG - 高品質（4K投稿向け・軽量）</option>
+              <option value="webp">WebP - 高品質・軽量（対応ブラウザ向け）</option>
             </select>
-            <p class="setting-desc">4Kで5MBを超える場合はJPEGがおすすめ（Xの上限対策）。</p>
+            <p class="setting-desc">4Kで5MBを超える場合はJPEG/WebPがおすすめ。WebPはPNGより軽く高品質です。</p>
           </div>
 
           <div class="time-estimate" id="time-estimate">
@@ -276,7 +277,7 @@
             <p class="card-desc">ゆっくりスクロールした時に見える画像（例: のの）</p>
             <label class="dropzone" id="moire-drop-a">
               <input type="file" id="moire-input-a" accept="image/*" class="file-input-hidden" />
-              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">画像Aを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
+              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">画像Aを選択</span><span class="dropzone-sub">JPG / PNG / WebP</span></div>
               <img id="moire-preview-a" class="preview-img hidden" alt="画像A" />
             </label>
           </section>
@@ -285,7 +286,7 @@
             <p class="card-desc">速くスクロールした時に見える画像（例: このみ）</p>
             <label class="dropzone" id="moire-drop-b">
               <input type="file" id="moire-input-b" accept="image/*" class="file-input-hidden" />
-              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span class="dropzone-text">画像Bを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
+              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span class="dropzone-text">画像Bを選択</span><span class="dropzone-sub">JPG / PNG / WebP</span></div>
               <img id="moire-preview-b" class="preview-img hidden" alt="画像B" />
             </label>
           </section>
