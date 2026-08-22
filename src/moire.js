@@ -192,7 +192,7 @@ export function initMoire(){
           binarizeImageData(id, threshold, false);
           cc.putImageData(id,0,0);
         }
-        return cc;
+        return c;
       }
       const ca=prepare(imgA);
       const cb=prepare(imgB);
