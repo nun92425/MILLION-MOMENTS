@@ -21,14 +21,18 @@
       <h1 class="logo"><img src="/images/logo.png" alt="MILLION MOMENTS" class="logo-img" width="2048" height="768" /></h1>
       <p class="tagline">無数の瞬間が、一つの景色になる。</p>
       <nav class="header-nav">
-        <a href="#howto" class="nav-link">使い方</a>
-        <a href="#about" class="nav-link">作品について</a>
-        <a href="#related" class="nav-link">他の作品</a>
+        <a href="#mosaic" class="nav-link is-tool active" data-tab="mosaic">MILLION MOMENTS</a>
+        <a href="#moire" class="nav-link is-tool" data-tab="moire">Moire</a>
+        <a href="#silhouette" class="nav-link is-tool" data-tab="silhouette">Silhouette</a>
+        <span class="nav-sep" aria-hidden="true"></span>
+        <a href="#howto" class="nav-link is-anchor">使い方</a>
+        <a href="#related" class="nav-link is-anchor">他の作品</a>
       </nav>
     </div>
   </header>
 
   <main class="main">
+    <div id="view-mosaic" class="tab-panel is-active" data-view="mosaic">
     <section class="notice">
       <span class="notice-icon" aria-hidden="true">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 11.7V16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><path d="M9 21h6"/><path d="M12 17v4"/></svg>
@@ -256,6 +260,110 @@
         遠くから見れば一枚の絵、近づけば無数の思い出。そんな二つの見え方を楽しめるフォトモザイクです。
       </p>
     </section>
+    </div>
+
+    <!-- Moire Generator -->
+    <div id="view-moire" class="tab-panel hidden" data-view="moire" aria-hidden="true">
+      <section class="notice">
+        <span class="notice-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18"/><path d="M12 3v18"/><circle cx="12" cy="12" r="4"/></svg></span>
+        <p class="notice-text"><strong>Xスクロール錯視ジェネレーター</strong> — 2枚の画像から低速/高速で切り替わる1枚のPNGを生成。実験的にXで「4Kを読み込む」並みの驚きを狙えます。画像はブラウザ内で完結します。</p>
+      </section>
+      <div class="layout">
+        <aside class="panel panel-left">
+          <section class="card">
+            <h2 class="card-title"><span class="card-num">A</span> 低速時に見える画像 <span class="required">必須</span></h2>
+            <p class="card-desc">ゆっくりスクロールした時に見える画像（例: のの）</p>
+            <label class="dropzone" id="moire-drop-a">
+              <input type="file" id="moire-input-a" accept="image/*" hidden />
+              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">画像Aを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
+              <img id="moire-preview-a" class="preview-img hidden" alt="画像A" />
+            </label>
+          </section>
+          <section class="card">
+            <h2 class="card-title"><span class="card-num">B</span> 高速時に見える画像 <span class="required">必須</span></h2>
+            <p class="card-desc">速くスクロールした時に見える画像（例: このみ）</p>
+            <label class="dropzone" id="moire-drop-b">
+              <input type="file" id="moire-input-b" accept="image/*" hidden />
+              <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span class="dropzone-text">画像Bを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
+              <img id="moire-preview-b" class="preview-img hidden" alt="画像B" />
+            </label>
+          </section>
+          <section class="card">
+            <h2 class="card-title">設定</h2>
+            <div class="setting">
+              <label class="setting-label">モード <span class="setting-tag">推奨: 通常</span></label>
+              <select id="moire-mode" class="select">
+                <option value="color" selected>通常（カラー）— 写真らしく自然</option>
+                <option value="binary">二値化（モノクロ）— 縞が最もくっきり</option>
+              </select>
+              <p class="setting-desc">二値化はモアレが最も強く出ますが階調は失われます。カラーは自然です。</p>
+            </div>
+            <div class="setting" id="moire-threshold-row" style="display:none">
+              <label class="setting-label">二値化しきい値 <span class="setting-value" id="moire-threshold-value">128</span></label>
+              <input type="range" id="moire-threshold" min="40" max="220" value="128" class="slider" />
+              <p class="setting-desc">自動ボタンで最適値を提案します。</p>
+              <button class="btn btn-ghost btn-sm" id="moire-auto-threshold" type="button">自動で決める（Otsu）</button>
+            </div>
+            <div class="setting">
+              <label class="setting-label">スリット幅 <span class="setting-value" id="moire-slit-value">2px / 周期4px</span></label>
+              <input type="range" id="moire-slit" min="1" max="4" value="2" step="1" class="slider" />
+              <div class="setting-hint"><span>細かい（繊細・Xで潰れやすい）</span><span>太い（堅牢・4K向け）</span></div>
+              <p class="setting-desc">Xでは4px周期（2pxスリット）が最も潰れにくいです。</p>
+            </div>
+            <div class="setting">
+              <label class="setting-label">出力サイズ</label>
+              <select id="moire-size" class="select">
+                <option value="1200">1200×675（軽量）</option>
+                <option value="1600" selected>1600×900（推奨・X表示サイズ）</option>
+                <option value="2048">2048×1152（高精細）</option>
+              </select>
+            </div>
+            <div class="setting">
+              <button class="btn btn-primary btn-large" id="moire-generate" disabled>錯視画像を生成</button>
+              <p class="setting-desc">2枚とも選択すると生成できます</p>
+            </div>
+            <div class="setting" style="display:flex;gap:8px">
+              <button class="btn btn-ghost" id="moire-sim-slow" type="button">低速シミュ</button>
+              <button class="btn btn-ghost" id="moire-sim-fast" type="button">高速シミュ</button>
+              <button class="btn btn-ghost" id="moire-sim-stop" type="button">停止</button>
+            </div>
+          </section>
+        </aside>
+        <section class="panel panel-right">
+          <div class="canvas-card">
+            <div class="canvas-header"><h2 class="card-title">プレビュー</h2><div class="canvas-controls"><button class="btn btn-ghost btn-sm" id="moire-zoom-out">−</button><span class="zoom-level" id="moire-zoom-level">100%</span><button class="btn btn-ghost btn-sm" id="moire-zoom-in">＋</button><button class="btn btn-ghost btn-sm" id="moire-fit">全体</button></div></div>
+            <div class="canvas-wrapper" id="moire-wrapper"><canvas id="moire-canvas" class="hidden"></canvas><div class="canvas-placeholder" id="moire-placeholder"><p class="placeholder-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18"/><path d="M12 3v18"/><circle cx="12" cy="12" r="4"/></svg></p><p class="placeholder-text">ここに錯視画像が表示されます</p><p class="placeholder-sub">画像AとBを選んで生成してください</p></div></div>
+            <div class="canvas-footer hidden" id="moire-footer"><p class="canvas-info" id="moire-info"></p><div class="canvas-actions"><button class="btn btn-primary" id="moire-download">PNGを保存</button></div></div>
+          </div>
+          <div class="card"><h3 class="card-title">Xでの見え方</h3><p class="card-desc">ゆっくりスクロールで画像A、素早く流すと画像Bが見えるのが理想です。XはJPEGに再圧縮するため、周期4px（スリット2px）と1600×900が最も潰れにくいです。生PNGはサイトからDLして確認してください。</p></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Silhouette Creator -->
+    <div id="view-silhouette" class="tab-panel hidden" data-view="silhouette" aria-hidden="true">
+      <section class="notice">
+        <span class="notice-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a7 7 0 0 1 7 7c0 4-7 10-7 10S5 13 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+        <p class="notice-text"><strong>シルエット作成ツール</strong> — 写真から黒ベタの影絵（背景透過PNG）を作ります。Moire用の素材作りにも使えます。</p>
+      </section>
+      <div class="layout">
+        <aside class="panel panel-left">
+          <section class="card">
+            <h2 class="card-title">元画像 <span class="required">必須</span></h2>
+            <label class="dropzone" id="sil-dropzone"><input type="file" id="sil-input" accept="image/*" hidden /><div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">写真を選択</span><span class="dropzone-sub">人物がはっきりしたものが向いています</span></div><img id="sil-preview" class="preview-img hidden" alt="元画像" /></label>
+          </section>
+          <section class="card">
+            <h2 class="card-title">調整</h2>
+            <div class="setting"><label class="setting-label">しきい値 <span class="setting-value" id="sil-threshold-value">128</span></label><input type="range" id="sil-threshold" min="20" max="230" value="128" class="slider" /><p class="setting-desc">暗い部分を黒、明るい部分を透明に分けます。</p><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" id="sil-auto" type="button">自動で決める（Otsu）</button><button class="btn btn-ghost btn-sm" id="sil-invert" type="button">反転</button></div></div>
+            <div class="setting"><label class="setting-label">背景色をスポイトで抜く（クロマキー）</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="sil-key-color" value="#00ff00" style="width:44px;height:32px;padding:2px;border:1px solid var(--border);border-radius:8px" /><input type="range" id="sil-tolerance" min="10" max="120" value="40" class="slider" style="flex:1" /><span class="setting-value" id="sil-tolerance-value">40</span></div><label class="toggle" style="margin-top:8px"><input type="checkbox" id="sil-use-key" /><span class="toggle-slider"></span><span class="toggle-text">この色を透明にする</span></label></div>
+            <div class="setting"><button class="btn btn-primary btn-large" id="sil-generate" disabled>シルエットを生成</button></div>
+          </section>
+        </aside>
+        <section class="panel panel-right">
+          <div class="canvas-card"><div class="canvas-header"><h2 class="card-title">プレビュー</h2><div class="canvas-controls"><button class="btn btn-ghost btn-sm" id="sil-zoom-out">−</button><span class="zoom-level" id="sil-zoom-level">100%</span><button class="btn btn-ghost btn-sm" id="sil-zoom-in">＋</button></div></div><div class="canvas-wrapper" id="sil-wrapper"><canvas id="silhouette-canvas" class="hidden"></canvas><div class="canvas-placeholder" id="sil-placeholder"><p class="placeholder-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a7 7 0 1 1 0 14a7 7 0 0 1 0-14z"/><path d="M8 14c1.5 2 4.5 2 6 0"/><path d="M5 21c2-3 11-3 14 0" /></svg></p><p class="placeholder-text">ここにシルエットが表示されます</p></div></div><div class="canvas-footer hidden" id="sil-footer"><div class="canvas-actions"><button class="btn btn-primary" id="sil-download">透過PNGを保存</button><button class="btn btn-ghost" id="sil-download-white">白背景PNGを保存</button></div></div></div>
+        </section>
+      </div>
+    </div>
 
     <section class="related" id="related">
       <h2 class="related-title">他の作品も見る</h2>

@@ -1,4 +1,5 @@
 import { selectBestMaterial, drawMosaic } from './mosaic.js';
+import './tabs.js';
 
 // Worker 初期化
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });

@@ -92,6 +92,10 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   white-space: nowrap;
 }
 .nav-link:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.nav-link.is-tool.active { color: var(--text); background: var(--accent-soft); border: 1px solid var(--accent-border); }
+.nav-sep { width: 1px; height: 18px; background: var(--border); align-self: center; margin: 0 4px; display: block; }
+.tab-panel.hidden { display: none !important; }
+.tab-panel.is-active { display: block; }
 
 /* Main */
 .main {
