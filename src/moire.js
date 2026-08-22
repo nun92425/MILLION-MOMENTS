@@ -165,9 +165,20 @@ export function initMoire(){
       const mode=modeEl.value;
       const threshold=parseInt(thresholdEl.value);
       const slit=parseInt(slitEl.value);
-      const size=parseInt(sizeEl.value);
-      const outW=size;
-      const outH=Math.round(size*9/16);
+      const sizeVal=sizeEl.value;
+      let outW, outH;
+      if(sizeVal==='original'){
+        outW=imgA.width;
+        outH=imgA.height;
+        // 上限チェック（ブラウザのCanvas上限）
+        if(outW>8000 || outH>8000){
+          if(!confirm(`元画像サイズ ${outW}×${outH}px は非常に大きく、生成に時間がかかるか失敗する可能性があります。続行しますか？`)) { generateBtn.disabled=false; generateBtn.textContent='錯視画像を生成'; return; }
+        }
+      } else {
+        const size=parseInt(sizeVal);
+        outW=size;
+        outH=Math.round(size*9/16);
+      }
       canvas.width=outW; canvas.height=outH;
       const ctx=canvas.getContext('2d');
       ctx.imageSmoothingQuality='high';

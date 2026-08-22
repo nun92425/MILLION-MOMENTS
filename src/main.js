@@ -118,17 +118,41 @@ function updateGenerateBtn() {
   updateTimeEstimate();
 }
 
+function getBaseValue(){
+  const v = baseResolutionEl.value;
+  if(v === 'original'){
+    if(targetImg) return Math.max(targetImg.width, targetImg.height);
+    return 0;
+  }
+  return parseInt(v) || 1200;
+}
 function updateResolutionPreview() {
   if (!baseResolutionEl || !outputSizeEl) return;
-  const base = parseInt(baseResolutionEl.value) || 1200;
+  const rawBase = baseResolutionEl.value;
+  const isOriginal = rawBase === 'original';
+  const base = isOriginal ? getBaseValue() : (parseInt(rawBase) || 1200);
   const scale = parseInt(exportScaleEl.value) || 2;
   const grid = parseInt(gridSizeEl.value) || 80;
+  if(isOriginal && !targetImg){
+    outputSizeEl.textContent = '元画像サイズ × ' + scale + '倍';
+    tileSizeEl.textContent = '—';
+    badge4kEl.classList.remove('active');
+    badge4kEl.textContent = '4K';
+    resolutionHintEl.textContent = 'メイン画像を選択すると出力サイズが表示されます。元画像のまま出力します。';
+    resolutionHintEl.className = 'resolution-hint';
+    return;
+  }
   // メイン画像があればアスペクト比を反映、なければ正方形想定
   let baseW = base, baseH = base;
   if (targetImg) {
-    const r = targetImg.width / targetImg.height;
-    if (r >= 1) { baseW = base; baseH = Math.round(base / r); }
-    else { baseH = base; baseW = Math.round(base * r); }
+    if(isOriginal){
+      baseW = targetImg.width;
+      baseH = targetImg.height;
+    } else {
+      const r = targetImg.width / targetImg.height;
+      if (r >= 1) { baseW = base; baseH = Math.round(base / r); }
+      else { baseH = base; baseW = Math.round(base * r); }
+    }
   }
   const outW = baseW * scale;
   const outH = baseH * scale;
@@ -161,7 +185,7 @@ function updateTimeEstimate() {
     return;
   }
   const grid = parseInt(gridSizeEl.value) || 80;
-  const base = parseInt(baseResolutionEl.value) || 1200;
+  const base = getBaseValue() || 1200;
   const scale = parseInt(exportScaleEl.value) || 2;
   const tiles = grid * grid;
   const basePixels = base * base; // 正方形近似
@@ -375,9 +399,10 @@ generateBtn.addEventListener('click', async () => {
   // Canvas上限チェック
   const targetWidth = targetBitmapData.originalWidth || targetImg.width;
   const targetHeight = targetBitmapData.originalHeight || targetImg.height;
-  const baseResolution = parseInt(baseResolutionEl.value) || 1200;
+  const baseVal = baseResolutionEl.value;
+  const baseResolution = baseVal === 'original' ? Math.max(targetImg.width, targetImg.height) : (parseInt(baseVal) || 1200);
   const maxSide = baseResolution;
-  const scale = Math.min(1, maxSide / Math.max(targetImg.width, targetImg.height));
+  const scale = baseVal === 'original' ? 1 : Math.min(1, maxSide / Math.max(targetImg.width, targetImg.height));
   const normW = Math.round(targetImg.width * scale);
   const normH = Math.round(targetImg.height * scale);
   // gridSizeは正方形だが、画像が長方形なら短辺側をアスペクト比で調整
@@ -485,7 +510,7 @@ generateBtn.addEventListener('click', async () => {
       const actualSec = Math.round((performance.now() - genStart) / 1000);
       // estimateを再計算して保存
       const grid = parseInt(gridSizeEl.value) || 80;
-      const base = parseInt(baseResolutionEl.value) || 1200;
+      const base = getBaseValue() || 1200;
       const scale = parseInt(exportScaleEl.value) || 2;
       const tiles = grid * grid;
       const basePixels = base * base;
