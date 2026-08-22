@@ -41,6 +41,7 @@ export function initSilhouette(){
   const tolEl=document.getElementById('sil-tolerance');
   const tolVal=document.getElementById('sil-tolerance-value');
   const useKeyEl=document.getElementById('sil-use-key');
+  const modeEl=document.getElementById('sil-mode');
   const generateBtn=document.getElementById('sil-generate');
   const canvas=document.getElementById('silhouette-canvas');
   const wrapper=document.getElementById('sil-wrapper');
@@ -52,6 +53,7 @@ export function initSilhouette(){
   if(!input || !canvas) return;
   let inverted=false;
   let srcCanvas=null, srcCtx=null, srcData=null;
+  let zoom=1;
 
   threshEl.addEventListener('input', ()=>{
     threshVal.textContent=threshEl.value;
@@ -61,6 +63,7 @@ export function initSilhouette(){
   tolEl.dispatchEvent(new Event('input'));
   useKeyEl.addEventListener('change', ()=> { if(srcImg) render(); });
   keyColorEl.addEventListener('input', ()=> { if(useKeyEl.checked && srcImg) render(); });
+  if(modeEl) modeEl.addEventListener('change', ()=> { if(srcImg) render(); });
 
   invertBtn.addEventListener('click', ()=>{
     inverted=!inverted;
@@ -113,11 +116,15 @@ export function initSilhouette(){
     if(!srcCanvas || !srcData) return;
     const w=srcCanvas.width, h=srcCanvas.height;
     canvas.width=w; canvas.height=h;
+    canvas.style.width='100%';
+    canvas.style.maxWidth='100%';
+    canvas.style.height='auto';
     const ctx=canvas.getContext('2d');
     const threshold=parseInt(threshEl.value);
     const useKey=useKeyEl.checked;
     const keyRgb=hexToRgb(keyColorEl.value);
     const tol=parseInt(tolEl.value);
+    const mode = modeEl ? modeEl.value : 'solid';
     const src=srcData.data;
     const out=ctx.createImageData(w,h);
     const d=out.data;
@@ -133,7 +140,14 @@ export function initSilhouette(){
         let isBlack = lum < threshold;
         if(inverted) isBlack=!isBlack;
         if(isBlack){
-          d[i]=0; d[i+1]=0; d[i+2]=0; d[i+3]=255;
+          if(mode==='detailed'){
+            // 表情を残す: 元の陰影を暗いグレーで保持（15-115の範囲）
+            const shade = Math.round(lum * 0.38 + 16);
+            const v = Math.max(0, Math.min(255, shade));
+            d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=255;
+          } else {
+            d[i]=0; d[i+1]=0; d[i+2]=0; d[i+3]=255;
+          }
         } else {
           d[i]=0; d[i+1]=0; d[i+2]=0; d[i+3]=0;
         }
@@ -145,12 +159,21 @@ export function initSilhouette(){
     canvas.classList.remove('hidden');
     placeholder.classList.add('hidden');
     footer.classList.remove('hidden');
+    // 背景を市松模様にして透過を分かりやすく、ズームをリセット
+    if(wrapper){
+      wrapper.style.backgroundColor='#f4f4f6';
+      wrapper.style.backgroundImage='linear-gradient(45deg, #e9e9ee 25%, transparent 25%), linear-gradient(-45deg, #e9e9ee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e9e9ee 75%), linear-gradient(-45deg, transparent 75%, #e9e9ee 75%)';
+      wrapper.style.backgroundSize='20px 20px';
+      wrapper.style.backgroundPosition='0 0, 0 10px, 10px -10px, -10px 0px';
+    }
+    zoom=1;
+    const zl=document.getElementById('sil-zoom-level');
+    if(zl) zl.textContent='100%';
   }
 
   generateBtn.addEventListener('click', render);
 
   // Zoom
-  let zoom=1;
   const zoomIn=document.getElementById('sil-zoom-in');
   const zoomOut=document.getElementById('sil-zoom-out');
   const zoomLevel=document.getElementById('sil-zoom-level');

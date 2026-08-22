@@ -354,6 +354,14 @@
           </section>
           <section class="card">
             <h2 class="card-title">調整</h2>
+            <div class="setting">
+              <label class="setting-label">仕上がり</label>
+              <select id="sil-mode" class="select">
+                <option value="solid" selected>輪郭のみ（ベタ塗り）</option>
+                <option value="detailed">表情を残す（陰影あり）</option>
+              </select>
+              <p class="setting-desc">輪郭のみは外形だけベタ黒。表情を残すは目・口等の陰影を暗いグレーで保持します。</p>
+            </div>
             <div class="setting"><label class="setting-label">しきい値 <span class="setting-value" id="sil-threshold-value">128</span></label><input type="range" id="sil-threshold" min="20" max="230" value="128" class="slider" /><p class="setting-desc">暗い部分を黒、明るい部分を透明に分けます。</p><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" id="sil-auto" type="button">自動で決める（Otsu）</button><button class="btn btn-ghost btn-sm" id="sil-invert" type="button">反転</button></div></div>
             <div class="setting"><label class="setting-label">背景色をスポイトで抜く（クロマキー）</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="sil-key-color" value="#00ff00" style="width:44px;height:32px;padding:2px;border:1px solid var(--border);border-radius:8px" /><input type="range" id="sil-tolerance" min="10" max="120" value="40" class="slider" style="flex:1" /><span class="setting-value" id="sil-tolerance-value">40</span></div><label class="toggle" style="margin-top:8px"><input type="checkbox" id="sil-use-key" /><span class="toggle-slider"></span><span class="toggle-text">この色を透明にする</span></label></div>
             <div class="setting"><button class="btn btn-primary btn-large" id="sil-generate" disabled>シルエットを生成</button></div>
