@@ -240,6 +240,11 @@ targetInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (file) await handleTargetFile(file);
 });
+targetDropzone.addEventListener('click', (e) => {
+  if (e.target === targetInput || e.target.closest('button')) return;
+  e.preventDefault();
+  targetInput.click();
+});
 targetDropzone.addEventListener('dragover', (e) => { e.preventDefault(); targetDropzone.classList.add('dragover'); });
 targetDropzone.addEventListener('dragleave', () => targetDropzone.classList.remove('dragover'));
 targetDropzone.addEventListener('drop', async (e) => {
@@ -319,6 +324,11 @@ async function handleMaterialFiles(files) {
 materialInput.addEventListener('change', async (e) => {
   await handleMaterialFiles(e.target.files);
   e.target.value = '';
+});
+materialDropzone.addEventListener('click', (e) => {
+  if (e.target === materialInput || e.target.closest('button')) return;
+  e.preventDefault();
+  materialInput.click();
 });
 materialDropzone.addEventListener('dragover', (e) => { e.preventDefault(); materialDropzone.classList.add('dragover'); });
 materialDropzone.addEventListener('dragleave', () => materialDropzone.classList.remove('dragover'));
