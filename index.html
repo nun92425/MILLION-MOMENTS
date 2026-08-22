@@ -58,7 +58,7 @@
           <h2 class="card-title"><span class="card-num">1</span> メイン画像 <span class="required">必須</span></h2>
           <p class="card-desc">完成形となる画像を1枚選んでください。遠くから見た時の絵になります。</p>
           <label class="dropzone" id="target-dropzone">
-            <input type="file" id="target-input" accept="image/*" hidden />
+            <input type="file" id="target-input" accept="image/*" class="file-input-hidden" />
             <div class="dropzone-content" id="target-placeholder">
               <span class="dropzone-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -76,7 +76,7 @@
           <h2 class="card-title"><span class="card-num">2</span> 素材画像 <span class="required">必須</span></h2>
           <p class="card-desc">モザイクを構成する小さな画像を複数選んでください。多いほど綺麗に仕上がります。</p>
           <label class="dropzone" id="material-dropzone">
-            <input type="file" id="material-input" accept="image/*" multiple hidden />
+            <input type="file" id="material-input" accept="image/*" multiple class="file-input-hidden" />
             <div class="dropzone-content">
               <span class="dropzone-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
@@ -274,7 +274,7 @@
             <h2 class="card-title"><span class="card-num">A</span> 低速時に見える画像 <span class="required">必須</span></h2>
             <p class="card-desc">ゆっくりスクロールした時に見える画像（例: のの）</p>
             <label class="dropzone" id="moire-drop-a">
-              <input type="file" id="moire-input-a" accept="image/*" hidden />
+              <input type="file" id="moire-input-a" accept="image/*" class="file-input-hidden" />
               <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">画像Aを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
               <img id="moire-preview-a" class="preview-img hidden" alt="画像A" />
             </label>
@@ -283,7 +283,7 @@
             <h2 class="card-title"><span class="card-num">B</span> 高速時に見える画像 <span class="required">必須</span></h2>
             <p class="card-desc">速くスクロールした時に見える画像（例: このみ）</p>
             <label class="dropzone" id="moire-drop-b">
-              <input type="file" id="moire-input-b" accept="image/*" hidden />
+              <input type="file" id="moire-input-b" accept="image/*" class="file-input-hidden" />
               <div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span class="dropzone-text">画像Bを選択</span><span class="dropzone-sub">JPG / PNG</span></div>
               <img id="moire-preview-b" class="preview-img hidden" alt="画像B" />
             </label>
@@ -350,7 +350,7 @@
         <aside class="panel panel-left">
           <section class="card">
             <h2 class="card-title">元画像 <span class="required">必須</span></h2>
-            <label class="dropzone" id="sil-dropzone"><input type="file" id="sil-input" accept="image/*" hidden /><div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">写真を選択</span><span class="dropzone-sub">人物がはっきりしたものが向いています</span></div><img id="sil-preview" class="preview-img hidden" alt="元画像" /></label>
+            <label class="dropzone" id="sil-dropzone"><input type="file" id="sil-input" accept="image/*" class="file-input-hidden" /><div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">写真を選択</span><span class="dropzone-sub">人物がはっきりしたものが向いています</span></div><img id="sil-preview" class="preview-img hidden" alt="元画像" /></label>
           </section>
           <section class="card">
             <h2 class="card-title">調整</h2>
