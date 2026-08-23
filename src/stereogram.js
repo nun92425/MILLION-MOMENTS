@@ -200,24 +200,25 @@ export function initStereogram(){
       }
       const depthData=dctx.getImageData(0,0,outW,outH).data;
 
-      // Prepare pattern (カラーモード時は元画像の色をパターンに使う)
+      // Prepare pattern（幾何学模様を推奨 - キャラクター絵は立体視を妨げるため）
       const useColor = colorEl && colorEl.checked;
       const patternType=patternEl.value;
       let patternCanvas=document.createElement('canvas');
       patternCanvas.width=patternWidth; patternCanvas.height=outH;
       const pctx=patternCanvas.getContext('2d');
       if(useColor && depthImg && !useTextMode){
-        // 元画像の色をそのままパターンに（テクスチャードステレオグラム）
         const ratio=Math.max(patternWidth/depthImg.width, outH/depthImg.height);
         const w=depthImg.width*ratio, h=depthImg.height*ratio;
         pctx.drawImage(depthImg, (patternWidth-w)/2, (outH-h)/2, w, h);
-        // 少しノイズを加えて立体視しやすく
-        pctx.fillStyle='rgba(255,255,255,0.08)';
+        pctx.fillStyle='rgba(255,255,255,0.06)';
         for(let i=0;i<300;i++){
           const x=Math.random()*patternWidth, y=Math.random()*outH;
           pctx.fillRect(x,y,1,1);
         }
       } else if(patternType==='dots'){
+        // 高コントラストなランダムドット（黒背景に白ドット）が立体視しやすい
+        pctx.fillStyle='#0a0a0f';
+        pctx.fillRect(0,0,patternWidth,outH);
         // Random dots
         pctx.fillStyle='#e8e8f0';
         pctx.fillRect(0,0,patternWidth,outH);
@@ -252,38 +253,47 @@ export function initStereogram(){
       }
       const patternData=pctx.getImageData(0,0,patternWidth,outH).data;
 
-      // Generate stereogram
+      // Generate stereogram — 非累積方式で周期を一定に保ち、右側の崩壊を防ぐ
+      // シンプルなテスト用: ランダムドット + 中央の白い四角が浮かび上がるかでデバッグ可能
       const out=ctx.createImageData(outW,outH);
       const outData=out.data;
-      // Initialize first patternWidth columns with pattern
-      for(let y=0;y<outH;y++){
-        for(let x=0;x<patternWidth && x<outW;x++){
-          const pi=(y*patternWidth + x)*4;
-          const oi=(y*outW + x)*4;
-          outData[oi]=patternData[pi];
-          outData[oi+1]=patternData[pi+1];
-          outData[oi+2]=patternData[pi+2];
-          outData[oi+3]=255;
-        }
+      const effectiveMaxDepth = Math.min(maxDepth, Math.floor(patternWidth * 0.45));
+      // 深度マップの元画像の色（カラーモード用）— depthC と同じサイズで取得済みの depthData を流用
+      // depthData は深度（輝度）だが、useColor 時は元画像の色も必要なので、別途 depthImg の色を取得
+      let colorData=null;
+      if(useColor && depthImg && !useTextMode){
+        const colorC=document.createElement('canvas');
+        colorC.width=outW; colorC.height=outH;
+        const cctx=colorC.getContext('2d');
+        const ratio=Math.max(outW/depthImg.width, outH/depthImg.height);
+        const w=depthImg.width*ratio, h=depthImg.height*ratio;
+        cctx.drawImage(depthImg, (outW-w)/2, (outH-h)/2, w, h);
+        colorData=cctx.getImageData(0,0,outW,outH).data;
       }
-      // For remaining x, copy from left with depth-based shift
       for(let y=0;y<outH;y++){
-        for(let x=patternWidth;x<outW;x++){
+        for(let x=0;x<outW;x++){
           const depthIdx=(y*outW+x)*4;
           const lum=getLum(depthData[depthIdx], depthData[depthIdx+1], depthData[depthIdx+2]);
-          const depth = lum / 255; // 0 far, 1 close
-          const shift = Math.round(depth * maxDepth);
-          // Separation is patternWidth - shift
-          const separation = patternWidth - shift;
-          // Ensure separation is at least 1 and at most patternWidth-1
-          const clampedSep = Math.max(1, Math.min(patternWidth-1, separation));
-          const srcX = x - clampedSep;
-          const srcIdx=(y*outW + srcX)*4;
-          const dstIdx=(y*outW + x)*4;
-          outData[dstIdx]=outData[srcIdx];
-          outData[dstIdx+1]=outData[srcIdx+1];
-          outData[dstIdx+2]=outData[srcIdx+2];
-          outData[dstIdx+3]=255;
+          const depth = lum / 255;
+          const shift = Math.round(depth * effectiveMaxDepth);
+          // 常に基本周期を基準にシフト（累積誤差を防ぐ）
+          let patternX = (x - shift) % patternWidth;
+          if(patternX < 0) patternX += patternWidth * Math.ceil(-patternX / patternWidth);
+          const pi=(y*patternWidth + patternX)*4;
+          const oi=(y*outW + x)*4;
+          if(useColor && colorData && depth > 0.25){
+            // カラー：深度が高い部分は元画像の色をパターンにブレンド
+            const alpha = Math.min(1, (depth - 0.25) / 0.75 * 0.7); // 0.25-1 => 0-0.7
+            const cr=colorData[depthIdx], cg=colorData[depthIdx+1], cb=colorData[depthIdx+2];
+            outData[oi]= patternData[pi] * (1-alpha) + cr * alpha;
+            outData[oi+1]= patternData[pi+1] * (1-alpha) + cg * alpha;
+            outData[oi+2]= patternData[pi+2] * (1-alpha) + cb * alpha;
+          } else {
+            outData[oi]=patternData[pi];
+            outData[oi+1]=patternData[pi+1];
+            outData[oi+2]=patternData[pi+2];
+          }
+          outData[oi+3]=255;
         }
       }
       ctx.putImageData(out,0,0);

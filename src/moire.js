@@ -151,6 +151,19 @@ export function initMoire(){
     dz.addEventListener('drop', e=>{e.preventDefault(); dz.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleFile(f, which);});
   });
 
+  // 画像が入れられない場合のフォールバック（labelのネイティブが効かない環境向け）
+  [dropA, dropB].forEach((dz, idx)=>{
+    const inp = idx===0 ? inputA : inputB;
+    dz.addEventListener('click', (e)=>{
+      if(e.target===inp) return;
+      if(e.target.closest('label')===dz) return;
+      // 既にlabelで開く場合は二重起動を避けるため、少し遅延させて判定
+      setTimeout(()=> { if(!inp.files.length) inp.click(); }, 0);
+    });
+  });
+  inputA.addEventListener('click', ()=> inputA.value='');
+  inputB.addEventListener('click', ()=> inputB.value='');
+
   autoBtn.addEventListener('click', async ()=>{
     if(!imgA || !imgB) return;
     // Use image A as reference for Otsu
