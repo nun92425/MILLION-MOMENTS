@@ -324,6 +324,37 @@
               <input type="range" id="moire-contrast" min="0" max="60" value="0" step="10" class="slider" />
               <p class="setting-desc">高速側の視認性を上げるため、Bのコントラストを上げます。</p>
             </div>
+            <details class="details" style="margin-bottom:16px">
+              <summary>試験的機能 — 差が弱い場合にお試しください</summary>
+              <div class="setting" style="margin-top:12px">
+                <label class="setting-label">向き</label>
+                <select id="moire-orientation" class="select">
+                  <option value="horizontal" selected>横縞（縦スクロール用・推奨）</option>
+                  <option value="vertical">縦縞（横スクロール用）</option>
+                </select>
+                <p class="setting-desc">Xは縦スクロールなので通常は横縞。縦縞は横にスワイプした時に切り替わります。</p>
+              </div>
+              <div class="setting">
+                <label class="setting-label">インターレース方式</label>
+                <select id="moire-interlace" class="select">
+                  <option value="rows" selected>行ごと（横縞）— 定番</option>
+                  <option value="checker">市松（チェッカー）— 斜めでも変化</option>
+                </select>
+              </div>
+              <div class="setting">
+                <label class="setting-label">低速側ブラー <span class="setting-value" id="moire-blur-a-value">0px</span></label>
+                <input type="range" id="moire-blur-a" min="0" max="4" value="0" step="1" class="slider" />
+                <p class="setting-desc">低速側（A）をぼかすと、高速時の平均がBに寄り差が出やすくなります。</p>
+              </div>
+              <div class="setting">
+                <label class="setting-label">高速側シャープ <span class="setting-value" id="moire-sharp-b-value">0%</span></label>
+                <input type="range" id="moire-sharp-b" min="0" max="100" value="0" step="10" class="slider" />
+                <p class="setting-desc">高速側（B）をシャープにし、細部を残します。</p>
+              </div>
+              <div class="setting">
+                <label class="toggle"><input type="checkbox" id="moire-jpeg-sim" /><span class="toggle-slider"></span><span class="toggle-text">XのJPEG圧縮をプレビューで再現（低速時の潰れを確認）</span></label>
+              </div>
+            </details>
             <div class="setting">
               <label class="setting-label">出力サイズ</label>
               <select id="moire-size" class="select">

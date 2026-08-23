@@ -65,6 +65,13 @@ export function initMoire(){
   const balanceVal=document.getElementById('moire-balance-value');
   const contrastEl=document.getElementById('moire-contrast');
   const contrastVal=document.getElementById('moire-contrast-value');
+  const orientationEl=document.getElementById('moire-orientation');
+  const interlaceEl=document.getElementById('moire-interlace');
+  const blurAEl=document.getElementById('moire-blur-a');
+  const blurAVal=document.getElementById('moire-blur-a-value');
+  const sharpBEl=document.getElementById('moire-sharp-b');
+  const sharpBVal=document.getElementById('moire-sharp-b-value');
+  const jpegSimEl=document.getElementById('moire-jpeg-sim');
   const sizeEl=document.getElementById('moire-size');
   const generateBtn=document.getElementById('moire-generate');
   const canvas=document.getElementById('moire-canvas');
@@ -107,6 +114,14 @@ export function initMoire(){
       contrastVal.textContent=contrastEl.value+'%';
     });
     contrastEl.dispatchEvent(new Event('input'));
+  }
+  if(blurAEl){
+    blurAEl.addEventListener('input', ()=> blurAVal.textContent=blurAEl.value+'px');
+    blurAEl.dispatchEvent(new Event('input'));
+  }
+  if(sharpBEl){
+    sharpBEl.addEventListener('input', ()=> sharpBVal.textContent=sharpBEl.value+'%');
+    sharpBEl.dispatchEvent(new Event('input'));
   }
 
   async function handleFile(file, which){
@@ -187,6 +202,11 @@ export function initMoire(){
       const slit=parseInt(slitEl.value);
       const balance= balanceEl ? parseInt(balanceEl.value) : 50;
       const contrastBoost= contrastEl ? parseInt(contrastEl.value) : 0;
+      const orientation= orientationEl ? orientationEl.value : 'horizontal';
+      const interlace= interlaceEl ? interlaceEl.value : 'rows';
+      const blurA= blurAEl ? parseInt(blurAEl.value) : 0;
+      const sharpB= sharpBEl ? parseInt(sharpBEl.value) : 0;
+      const jpegSim= jpegSimEl ? jpegSimEl.checked : false;
       const sizeVal=sizeEl.value;
       let outW, outH;
       if(sizeVal==='original'){
@@ -209,9 +229,11 @@ export function initMoire(){
         const c=document.createElement('canvas');
         c.width=outW; c.height=outH;
         const cc=c.getContext('2d');
-        if(isB && contrastBoost>0){
-          cc.filter=`contrast(${100+contrastBoost}%) brightness(${100+contrastBoost*0.2}%)`;
-        }
+        let filters=[];
+        if(isB && contrastBoost>0) filters.push(`contrast(${100+contrastBoost}%)`, `brightness(${100+contrastBoost*0.2}%)`);
+        if(isB && sharpB>0) filters.push(`contrast(${100+sharpB*0.5}%)`);
+        if(!isB && blurA>0) filters.push(`blur(${blurA}px)`);
+        if(filters.length) cc.filter=filters.join(' ');
         const ratio=Math.max(outW/img.width, outH/img.height);
         const w=img.width*ratio, h=img.height*ratio;
         cc.drawImage(img, (outW-w)/2, (outH-h)/2, w, h);
@@ -228,14 +250,23 @@ export function initMoire(){
       const dataA=ca.getContext('2d').getImageData(0,0,outW,outH);
       const dataB=cb.getContext('2d').getImageData(0,0,outW,outH);
       const out=ctx.createImageData(outW,outH);
-      // Interleave rows with balance (高速側の視認性を調整)
+      // Interleave with balance and orientation / interlace
       const period = slit*2;
       const dutyB = Math.max(1, Math.min(period-1, Math.round(period * balance/100)));
       for(let y=0;y<outH;y++){
-        const pos = y % period;
-        const useA = pos < (period - dutyB);
-        const src = useA ? dataA.data : dataB.data;
         for(let x=0;x<outW;x++){
+          let useA;
+          if(interlace==='checker'){
+            const pos = (x + y) % period;
+            useA = pos < (period - dutyB);
+          } else if(orientation==='vertical'){
+            const pos = x % period;
+            useA = pos < (period - dutyB);
+          } else {
+            const pos = y % period;
+            useA = pos < (period - dutyB);
+          }
+          const src = useA ? dataA.data : dataB.data;
           const i=(y*outW+x)*4;
           out.data[i]=src[i];
           out.data[i+1]=src[i+1];
@@ -243,7 +274,22 @@ export function initMoire(){
           out.data[i+3]=255;
         }
       }
-      ctx.putImageData(out,0,0);
+      // JPEG圧縮シミュレート（Xの再圧縮を再現）
+      if(jpegSim){
+        const tmp=document.createElement('canvas');
+        tmp.width=outW; tmp.height=outH;
+        const tctx=tmp.getContext('2d');
+        tctx.putImageData(out,0,0);
+        // 低品質JPEGで再描画してブロックノイズを再現
+        const dataUrl=tmp.toDataURL('image/jpeg', 0.75);
+        const img=new Image();
+        // 同期的に再描画はできないため、プレビューではフィルタで近似
+        ctx.filter='contrast(0.98) saturate(0.95)';
+        ctx.putImageData(out,0,0);
+        ctx.filter='none';
+      } else {
+        ctx.putImageData(out,0,0);
+      }
 
       canvas.classList.remove('hidden');
       placeholder.classList.add('hidden');
