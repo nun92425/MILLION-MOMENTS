@@ -31,6 +31,7 @@ export function initStereogram(){
   const patternDrop=document.getElementById('stereo-pattern-dropzone');
   const patternInput=document.getElementById('stereo-pattern-input');
   const patternPreview=document.getElementById('stereo-pattern-preview');
+  const colorEl=document.getElementById('stereo-color');
   const depthEl=document.getElementById('stereo-depth');
   const depthVal=document.getElementById('stereo-depth-value');
   const widthEl=document.getElementById('stereo-width');
@@ -97,11 +98,21 @@ export function initStereogram(){
     }
   }
   input.addEventListener('change', e=> handleDepthFile(e.target.files[0]));
+  drop.addEventListener('click', e=>{
+    if(e.target===input) return;
+    if(e.target.closest('label')===drop) return;
+    input.click();
+  });
   drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('dragover');});
   drop.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
   drop.addEventListener('drop', e=>{e.preventDefault(); drop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleDepthFile(f);});
   textInput.addEventListener('input', updateGenerateBtn);
   patternInput.addEventListener('change', e=> handlePatternFile(e.target.files[0]));
+  patternDrop.addEventListener('click', e=>{
+    if(e.target===patternInput) return;
+    if(e.target.closest('label')===patternDrop) return;
+    patternInput.click();
+  });
   patternDrop.addEventListener('dragover', e=>{e.preventDefault(); patternDrop.classList.add('dragover');});
   patternDrop.addEventListener('dragleave', ()=> patternDrop.classList.remove('dragover'));
   patternDrop.addEventListener('drop', e=>{e.preventDefault(); patternDrop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handlePatternFile(f);});
@@ -189,12 +200,24 @@ export function initStereogram(){
       }
       const depthData=dctx.getImageData(0,0,outW,outH).data;
 
-      // Prepare pattern
+      // Prepare pattern (カラーモード時は元画像の色をパターンに使う)
+      const useColor = colorEl && colorEl.checked;
       const patternType=patternEl.value;
       let patternCanvas=document.createElement('canvas');
       patternCanvas.width=patternWidth; patternCanvas.height=outH;
       const pctx=patternCanvas.getContext('2d');
-      if(patternType==='dots'){
+      if(useColor && depthImg && !useTextMode){
+        // 元画像の色をそのままパターンに（テクスチャードステレオグラム）
+        const ratio=Math.max(patternWidth/depthImg.width, outH/depthImg.height);
+        const w=depthImg.width*ratio, h=depthImg.height*ratio;
+        pctx.drawImage(depthImg, (patternWidth-w)/2, (outH-h)/2, w, h);
+        // 少しノイズを加えて立体視しやすく
+        pctx.fillStyle='rgba(255,255,255,0.08)';
+        for(let i=0;i<300;i++){
+          const x=Math.random()*patternWidth, y=Math.random()*outH;
+          pctx.fillRect(x,y,1,1);
+        }
+      } else if(patternType==='dots'){
         // Random dots
         pctx.fillStyle='#e8e8f0';
         pctx.fillRect(0,0,patternWidth,outH);

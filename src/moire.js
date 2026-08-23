@@ -139,6 +139,13 @@ export function initMoire(){
   inputB.addEventListener('change', e=> handleFile(e.target.files[0],'B'));
   [dropA, dropB].forEach((dz, idx)=>{
     const which= idx===0?'A':'B';
+    const inp = idx===0 ? inputA : inputB;
+    dz.addEventListener('click', (e)=>{
+      if(e.target===inp) return;
+      // labelのネイティブ動作に任せるが、念のためフォールバック
+      if(e.target.closest('label')===dz) return;
+      inp.click();
+    });
     dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('dragover');});
     dz.addEventListener('dragleave', ()=> dz.classList.remove('dragover'));
     dz.addEventListener('drop', e=>{e.preventDefault(); dz.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleFile(f, which);});

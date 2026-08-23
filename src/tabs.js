@@ -21,7 +21,7 @@ function switchTab(name) {
   if (location.hash !== '#' + valid) {
     history.replaceState(null, '', '#' + valid);
   }
-  document.title = valid === 'moire' ? 'Moire - MILLION MOMENTS' : valid === 'silhouette' ? 'Silhouette - MILLION MOMENTS' : 'MILLION MOMENTS - フォトモザイク生成ツール';
+  document.title = valid === 'moire' ? 'Moire - MILLION MOMENTS' : valid === 'silhouette' ? 'Silhouette - MILLION MOMENTS' : valid === 'stereogram' ? 'Stereogram - MILLION MOMENTS' : 'MILLION MOMENTS - フォトモザイク生成ツール';
 }
 
   document.querySelectorAll('[data-tab]').forEach(a => {
@@ -49,15 +49,24 @@ document.querySelectorAll('.nav-link.is-anchor').forEach(a => {
 
 function initFromHash() {
   const hash = location.hash.replace('#', '');
-  if (hash === 'moire' || hash === 'silhouette' || hash === 'stereogram' || hash === 'mosaic') switchTab(hash);
-  else switchTab('mosaic');
+  if (hash === 'moire' || hash === 'silhouette' || hash === 'stereogram' || hash === 'mosaic') {
+    switchTab(hash);
+    if (hash === 'moire') import('./moire.js').then(m => m.initMoire && m.initMoire());
+    if (hash === 'silhouette') import('./silhouette.js').then(m => m.initSilhouette && m.initSilhouette());
+    if (hash === 'stereogram') import('./stereogram.js').then(m => m.initStereogram && m.initStereogram());
+  } else switchTab('mosaic');
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFromHash);
 else initFromHash();
 
 window.addEventListener('hashchange', () => {
   const h = location.hash.replace('#', '');
-  if (h) switchTab(h);
+  if (h) {
+    switchTab(h);
+    if (h === 'moire') import('./moire.js').then(m => m.initMoire && m.initMoire());
+    if (h === 'silhouette') import('./silhouette.js').then(m => m.initSilhouette && m.initSilhouette());
+    if (h === 'stereogram') import('./stereogram.js').then(m => m.initStereogram && m.initStereogram());
+  }
 });
 
 export { switchTab };

@@ -101,6 +101,11 @@ export function initSilhouette(){
     render();
   }
   input.addEventListener('change', e=> handleFile(e.target.files[0]));
+  drop.addEventListener('click', e=>{
+    if(e.target===input) return;
+    if(e.target.closest('label')===drop) return;
+    input.click();
+  });
   drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('dragover');});
   drop.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
   drop.addEventListener('drop', e=>{e.preventDefault(); drop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleFile(f);});

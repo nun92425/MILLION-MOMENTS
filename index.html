@@ -425,7 +425,11 @@
           </section>
           <section class="card">
             <h2 class="card-title">設定</h2>
-            <div class="setting"><label class="setting-label">立体感の強さ <span class="setting-value" id="stereo-depth-value">18</span></label><input type="range" id="stereo-depth" min="6" max="36" value="18" class="slider" /><p class="setting-desc">大きいほど飛び出しが強くなりますが、見えにくくなります。</p></div>
+            <div class="setting">
+              <label class="toggle"><input type="checkbox" id="stereo-color" checked /><span class="toggle-slider"></span><span class="toggle-text">元画像の色で立体化（カラー）</span></label>
+              <p class="setting-desc">ONで深度の高い部分に元画像の色を保持。OFFでドットのみのモノクロ立体視になります。</p>
+            </div>
+            <div class="setting"><label class="setting-label">立体感の強さ <span class="setting-value" id="stereo-depth-value">24</span></label><input type="range" id="stereo-depth" min="6" max="48" value="24" class="slider" /><p class="setting-desc">大きいほど飛び出しが強くなりますが、見えにくくなります。24前後がおすすめ。</p></div>
             <div class="setting"><label class="setting-label">パターン幅 <span class="setting-value" id="stereo-width-value">80px</span></label><input type="range" id="stereo-width" min="40" max="140" value="80" step="10" class="slider" /></div>
             <div class="setting"><button class="btn btn-primary btn-large" id="stereo-generate" disabled>ステレオグラムを生成</button></div>
           </section>
