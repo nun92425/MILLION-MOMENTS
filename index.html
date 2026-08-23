@@ -24,6 +24,7 @@
         <a href="#mosaic" class="nav-link is-tool active" data-tab="mosaic">MILLION MOMENTS</a>
         <a href="#moire" class="nav-link is-tool" data-tab="moire">Moire</a>
         <a href="#silhouette" class="nav-link is-tool" data-tab="silhouette">Silhouette</a>
+        <a href="#stereogram" class="nav-link is-tool" data-tab="stereogram">Stereogram</a>
         <span class="nav-sep" aria-hidden="true"></span>
         <a href="#howto" class="nav-link is-anchor">使い方</a>
         <a href="#related" class="nav-link is-anchor">他の作品</a>
@@ -313,6 +314,17 @@
               <p class="setting-desc">Xでは4px周期（2pxスリット）が最も潰れにくいです。</p>
             </div>
             <div class="setting">
+              <label class="setting-label">バランス <span class="setting-value" id="moire-balance-value">50% / 50%</span></label>
+              <input type="range" id="moire-balance" min="20" max="80" value="50" step="5" class="slider" />
+              <div class="setting-hint"><span>低速側強め</span><span>高速側強め</span></div>
+              <p class="setting-desc">高速で見える画像Bを強調したい場合は右に寄せてください。</p>
+            </div>
+            <div class="setting">
+              <label class="setting-label">コントラスト強調 <span class="setting-value" id="moire-contrast-value">0%</span></label>
+              <input type="range" id="moire-contrast" min="0" max="60" value="0" step="10" class="slider" />
+              <p class="setting-desc">高速側の視認性を上げるため、Bのコントラストを上げます。</p>
+            </div>
+            <div class="setting">
               <label class="setting-label">出力サイズ</label>
               <select id="moire-size" class="select">
                 <option value="1200">1200×675（軽量）</option>
@@ -339,6 +351,57 @@
             <div class="canvas-footer hidden" id="moire-footer"><p class="canvas-info" id="moire-info"></p><div class="canvas-actions"><button class="btn btn-primary" id="moire-download">PNGを保存</button></div></div>
           </div>
           <div class="card"><h3 class="card-title">Xでの見え方</h3><p class="card-desc">ゆっくりスクロールで画像A、素早く流すと画像Bが見えるのが理想です。XはJPEGに再圧縮するため、周期4px（スリット2px）と1600×900が最も潰れにくいです。生PNGはサイトからDLして確認してください。</p></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Stereogram (Magic Eye) -->
+    <div id="view-stereogram" class="tab-panel hidden" data-view="stereogram" aria-hidden="true">
+      <section class="notice">
+        <span class="notice-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <p class="notice-text"><strong>ステレオグラム（マジカルアイ）生成</strong> — 1枚の画像の中に立体が隠れています。平行法でぼんやり見ると浮き上がって見えます。深度マップから完全ブラウザ生成。</p>
+      </section>
+      <div class="layout">
+        <aside class="panel panel-left">
+          <section class="card">
+            <h2 class="card-title">深度マップ <span class="required">必須</span></h2>
+            <p class="card-desc">白いほど手前、黒いほど奥に浮かび上がります。画像かテキストから作れます。</p>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <button class="btn btn-ghost btn-sm" id="stereo-mode-image" type="button" style="flex:1">画像から</button>
+              <button class="btn btn-ghost btn-sm" id="stereo-mode-text" type="button" style="flex:1">テキストから</button>
+            </div>
+            <div id="stereo-image-mode">
+              <label class="dropzone" id="stereo-dropzone"><input type="file" id="stereo-input" accept="image/*" class="file-input-hidden" /><div class="dropzone-content"><span class="dropzone-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="dropzone-text">深度画像を選択</span><span class="dropzone-sub">白が手前・黒が奥</span></div><img id="stereo-preview" class="preview-img hidden" alt="深度" /></label>
+            </div>
+            <div id="stereo-text-mode" class="hidden">
+              <input type="text" id="stereo-text" class="select" placeholder="例: MILLION" maxlength="12" value="MILLION" />
+              <p class="setting-desc">テキストが立体で浮かび上がります。短い方が見やすいです。</p>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <select id="stereo-font" class="select" style="flex:1"><option value="900">極太</option><option value="800" selected>太字</option><option value="700">普通</option></select>
+                <button class="btn btn-ghost btn-sm" id="stereo-text-generate" type="button">深度を作成</button>
+              </div>
+              <canvas id="stereo-text-canvas" class="hidden"></canvas>
+            </div>
+          </section>
+          <section class="card">
+            <h2 class="card-title">パターン</h2>
+            <select id="stereo-pattern" class="select">
+              <option value="dots" selected>ランダムドット（定番）</option>
+              <option value="stripes">ストライプ</option>
+              <option value="custom">画像から（アップロード）</option>
+            </select>
+            <label class="dropzone hidden" id="stereo-pattern-dropzone" style="margin-top:10px"><input type="file" id="stereo-pattern-input" accept="image/*" class="file-input-hidden" /><div class="dropzone-content"><span class="dropzone-text">パターン画像を選択</span></div><img id="stereo-pattern-preview" class="preview-img hidden" alt="パターン" /></label>
+          </section>
+          <section class="card">
+            <h2 class="card-title">設定</h2>
+            <div class="setting"><label class="setting-label">立体感の強さ <span class="setting-value" id="stereo-depth-value">18</span></label><input type="range" id="stereo-depth" min="6" max="36" value="18" class="slider" /><p class="setting-desc">大きいほど飛び出しが強くなりますが、見えにくくなります。</p></div>
+            <div class="setting"><label class="setting-label">パターン幅 <span class="setting-value" id="stereo-width-value">80px</span></label><input type="range" id="stereo-width" min="40" max="140" value="80" step="10" class="slider" /></div>
+            <div class="setting"><button class="btn btn-primary btn-large" id="stereo-generate" disabled>ステレオグラムを生成</button></div>
+          </section>
+        </aside>
+        <section class="panel panel-right">
+          <div class="canvas-card"><div class="canvas-header"><h2 class="card-title">プレビュー</h2><div class="canvas-controls"><button class="btn btn-ghost btn-sm" id="stereo-zoom-out">−</button><span class="zoom-level" id="stereo-zoom-level">100%</span><button class="btn btn-ghost btn-sm" id="stereo-zoom-in">＋</button></div></div><div class="canvas-wrapper" id="stereo-wrapper"><canvas id="stereogram-canvas" class="hidden"></canvas><div class="canvas-placeholder" id="stereo-placeholder"><p class="placeholder-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></p><p class="placeholder-text">ここにステレオグラムが表示されます</p><p class="placeholder-sub">深度マップを用意して生成してください</p></div></div><div class="canvas-footer hidden" id="stereo-footer"><div class="canvas-actions"><button class="btn btn-primary" id="stereo-download">PNGを保存</button></div></div></div>
+          <div class="card"><h3 class="card-title">見え方のコツ</h3><p class="card-desc">画面から30cm離れ、目の焦点を画面の奥に合わせる（寄り目ではなく、ぼんやり遠くを見る）感じで見ると、数秒で立体が浮かび上がります。スマホを横にして、平行法でお試しください。</p></div>
         </section>
       </div>
     </div>

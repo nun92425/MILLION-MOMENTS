@@ -1,7 +1,8 @@
 const panels = {
   mosaic: document.getElementById('view-mosaic'),
   moire: document.getElementById('view-moire'),
-  silhouette: document.getElementById('view-silhouette')
+  silhouette: document.getElementById('view-silhouette'),
+  stereogram: document.getElementById('view-stereogram')
 };
 
 function switchTab(name) {
@@ -23,13 +24,13 @@ function switchTab(name) {
   document.title = valid === 'moire' ? 'Moire - MILLION MOMENTS' : valid === 'silhouette' ? 'Silhouette - MILLION MOMENTS' : 'MILLION MOMENTS - フォトモザイク生成ツール';
 }
 
-document.querySelectorAll('[data-tab]').forEach(a => {
+  document.querySelectorAll('[data-tab]').forEach(a => {
   a.addEventListener('click', (e) => {
     e.preventDefault();
     switchTab(a.dataset.tab);
-    // Lazy load moire/silhouette on first open
     if (a.dataset.tab === 'moire') import('./moire.js').then(m => m.initMoire && m.initMoire());
     if (a.dataset.tab === 'silhouette') import('./silhouette.js').then(m => m.initSilhouette && m.initSilhouette());
+    if (a.dataset.tab === 'stereogram') import('./stereogram.js').then(m => m.initStereogram && m.initStereogram());
   });
 });
 
@@ -48,7 +49,7 @@ document.querySelectorAll('.nav-link.is-anchor').forEach(a => {
 
 function initFromHash() {
   const hash = location.hash.replace('#', '');
-  if (hash === 'moire' || hash === 'silhouette' || hash === 'mosaic') switchTab(hash);
+  if (hash === 'moire' || hash === 'silhouette' || hash === 'stereogram' || hash === 'mosaic') switchTab(hash);
   else switchTab('mosaic');
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFromHash);

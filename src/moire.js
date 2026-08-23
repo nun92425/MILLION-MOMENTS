@@ -61,6 +61,10 @@ export function initMoire(){
   const autoBtn=document.getElementById('moire-auto-threshold');
   const slitEl=document.getElementById('moire-slit');
   const slitVal=document.getElementById('moire-slit-value');
+  const balanceEl=document.getElementById('moire-balance');
+  const balanceVal=document.getElementById('moire-balance-value');
+  const contrastEl=document.getElementById('moire-contrast');
+  const contrastVal=document.getElementById('moire-contrast-value');
   const sizeEl=document.getElementById('moire-size');
   const generateBtn=document.getElementById('moire-generate');
   const canvas=document.getElementById('moire-canvas');
@@ -91,6 +95,19 @@ export function initMoire(){
     slitVal.textContent=`${s}px / 周期${s*2}px`;
   });
   slitEl.dispatchEvent(new Event('input'));
+  if(balanceEl){
+    balanceEl.addEventListener('input', ()=>{
+      const v=parseInt(balanceEl.value);
+      balanceVal.textContent=`${100-v}% / ${v}%`;
+    });
+    balanceEl.dispatchEvent(new Event('input'));
+  }
+  if(contrastEl){
+    contrastEl.addEventListener('input', ()=>{
+      contrastVal.textContent=contrastEl.value+'%';
+    });
+    contrastEl.dispatchEvent(new Event('input'));
+  }
 
   async function handleFile(file, which){
     if(!file || !file.type.startsWith('image/')) return;
@@ -140,9 +157,12 @@ export function initMoire(){
     if(animId) cancelAnimationFrame(animId);
     animId=null;
     wrapper.scrollTop=0;
+    wrapper.style.filter='none';
   }
   function startAnim(speed){
     stopAnim();
+    // 高速時はブラーをかけて人間の残像を再現
+    wrapper.style.filter = speed>2 ? 'blur(0.7px) contrast(1.1)' : 'none';
     let last=performance.now();
     function frame(now){
       const dt=now-last; last=now;
@@ -153,8 +173,8 @@ export function initMoire(){
     }
     animId=requestAnimationFrame(frame);
   }
-  if(simSlow) simSlow.addEventListener('click', ()=> startAnim(0.8));
-  if(simFast) simFast.addEventListener('click', ()=> startAnim(4));
+  if(simSlow) simSlow.addEventListener('click', ()=> startAnim(0.7));
+  if(simFast) simFast.addEventListener('click', ()=> startAnim(4.5));
   if(simStop) simStop.addEventListener('click', stopAnim);
 
   generateBtn.addEventListener('click', async ()=>{
@@ -165,12 +185,13 @@ export function initMoire(){
       const mode=modeEl.value;
       const threshold=parseInt(thresholdEl.value);
       const slit=parseInt(slitEl.value);
+      const balance= balanceEl ? parseInt(balanceEl.value) : 50;
+      const contrastBoost= contrastEl ? parseInt(contrastEl.value) : 0;
       const sizeVal=sizeEl.value;
       let outW, outH;
       if(sizeVal==='original'){
         outW=imgA.width;
         outH=imgA.height;
-        // 上限チェック（ブラウザのCanvas上限）
         if(outW>8000 || outH>8000){
           if(!confirm(`元画像サイズ ${outW}×${outH}px は非常に大きく、生成に時間がかかるか失敗する可能性があります。続行しますか？`)) { generateBtn.disabled=false; generateBtn.textContent='錯視画像を生成'; return; }
         }
@@ -184,14 +205,17 @@ export function initMoire(){
       ctx.imageSmoothingQuality='high';
 
       // Prepare offscreen canvases for A and B resized to out size with cover
-      function prepare(img){
+      function prepare(img, isB){
         const c=document.createElement('canvas');
         c.width=outW; c.height=outH;
         const cc=c.getContext('2d');
-        // Cover: fill entire out rect
+        if(isB && contrastBoost>0){
+          cc.filter=`contrast(${100+contrastBoost}%) brightness(${100+contrastBoost*0.2}%)`;
+        }
         const ratio=Math.max(outW/img.width, outH/img.height);
         const w=img.width*ratio, h=img.height*ratio;
         cc.drawImage(img, (outW-w)/2, (outH-h)/2, w, h);
+        cc.filter='none';
         if(mode==='binary'){
           const id=cc.getImageData(0,0,outW,outH);
           binarizeImageData(id, threshold, false);
@@ -199,14 +223,17 @@ export function initMoire(){
         }
         return c;
       }
-      const ca=prepare(imgA);
-      const cb=prepare(imgB);
+      const ca=prepare(imgA, false);
+      const cb=prepare(imgB, true);
       const dataA=ca.getContext('2d').getImageData(0,0,outW,outH);
       const dataB=cb.getContext('2d').getImageData(0,0,outW,outH);
       const out=ctx.createImageData(outW,outH);
-      // Interleave rows
+      // Interleave rows with balance (高速側の視認性を調整)
+      const period = slit*2;
+      const dutyB = Math.max(1, Math.min(period-1, Math.round(period * balance/100)));
       for(let y=0;y<outH;y++){
-        const useA = Math.floor(y / slit) % 2 === 0;
+        const pos = y % period;
+        const useA = pos < (period - dutyB);
         const src = useA ? dataA.data : dataB.data;
         for(let x=0;x<outW;x++){
           const i=(y*outW+x)*4;
@@ -221,7 +248,7 @@ export function initMoire(){
       canvas.classList.remove('hidden');
       placeholder.classList.add('hidden');
       footer.classList.remove('hidden');
-      info.textContent=`${outW}×${outH}px / 周期${slit*2}px / ${mode==='binary'?'二値化しきい値'+threshold:'通常カラー'} — 低速でA、高速でBが見えやすいか低速/高速シミュで確認してください`;
+      info.textContent=`${outW}×${outH}px / 周期${slit*2}px / バランス${100-balance}:${balance} / ${mode==='binary'?'二値化'+threshold:'通常'}${contrastBoost? ' コントラスト+'+contrastBoost+'%':''} — 低速でA、高速でB。差が弱い場合はバランスを右に、スリットを4pxにしてください`;
       // Fit
       currentZoom=1; applyZoom();
     } catch(e){
