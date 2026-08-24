@@ -200,41 +200,64 @@ export function initStereogram(){
       }
       const depthData=dctx.getImageData(0,0,outW,outH).data;
 
-      // Prepare pattern（幾何学模様を推奨 - キャラクター絵は立体視を妨げるため）
+      // 搬送波は必ず無意味幾何学テクスチャに限定（仕様書5.1準拠）
+      // 有意味なキャラクター絵をそのまま搬送波にすると腹側路の物体認識が対応問題を阻害する
       const useColor = colorEl && colorEl.checked;
       const patternType=patternEl.value;
       let patternCanvas=document.createElement('canvas');
       patternCanvas.width=patternWidth; patternCanvas.height=outH;
       const pctx=patternCanvas.getContext('2d');
       if(useColor && depthImg && !useTextMode){
-        const ratio=Math.max(patternWidth/depthImg.width, outH/depthImg.height);
-        const w=depthImg.width*ratio, h=depthImg.height*ratio;
-        pctx.drawImage(depthImg, (patternWidth-w)/2, (outH-h)/2, w, h);
-        pctx.fillStyle='rgba(255,255,255,0.06)';
-        for(let i=0;i<300;i++){
-          const x=Math.random()*patternWidth, y=Math.random()*outH;
-          pctx.fillRect(x,y,1,1);
-        }
-      } else if(patternType==='dots'){
-        // 高コントラストなランダムドット（黒背景に白ドット）が立体視しやすい
+        // テクスチャード・ステレオグラム：元画像の色をサンプリングしたドット群を生成
+        // 元画像を重ねる透過合成ではなく、ドット自体を元画像の色で生成してからシフトさせる
         pctx.fillStyle='#0a0a0f';
         pctx.fillRect(0,0,patternWidth,outH);
-        // Random dots
-        pctx.fillStyle='#e8e8f0';
-        pctx.fillRect(0,0,patternWidth,outH);
-        for(let i=0;i<2000;i++){
+        // depthImg から色をサンプリングしたドットを生成
+        const tmpC=document.createElement('canvas');
+        tmpC.width=depthImg.width; tmpC.height=depthImg.height;
+        const tmpCtx=tmpC.getContext('2d');
+        tmpCtx.drawImage(depthImg,0,0,depthImg.width,depthImg.height);
+        let tmpData;
+        try { tmpData=tmpCtx.getImageData(0,0,depthImg.width,depthImg.height).data; } catch { tmpData=null; }
+        for(let i=0;i<2500;i++){
           const x=Math.random()*patternWidth, y=Math.random()*outH;
-          const r=Math.random()*80+120;
-          pctx.fillStyle=`rgb(${r|0},${r|0},${r|0})`;
+          let r=200,g=200,b=200;
+          if(tmpData){
+            const sx=Math.floor(Math.random()*depthImg.width);
+            const sy=Math.floor(Math.random()*depthImg.height);
+            const idx=(sy*depthImg.width+sx)*4;
+            r=tmpData[idx]; g=tmpData[idx+1]; b=tmpData[idx+2];
+            // 明るすぎる/暗すぎる色は視差検出を妨げるため少し調整
+            const lum=getLum(r,g,b);
+            if(lum<30 || lum>225){
+              r=Math.random()*80+100; g=r; b=r;
+            }
+          }
+          pctx.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
           pctx.beginPath();
-          pctx.arc(x,y, Math.random()*1.5+0.5, 0, Math.PI*2);
+          pctx.arc(x,y, Math.random()*1.2+0.6, 0, Math.PI*2);
           pctx.fill();
         }
-        // Add some colored dots for interest
-        for(let i=0;i<400;i++){
+      } else if(patternType==='dots'){
+        // 高コントラストなランダムドット（黒背景に白ドット）が立体視しやすい — マッチング・プリミティブを明確に
+        pctx.fillStyle='#0a0a0f';
+        pctx.fillRect(0,0,patternWidth,outH);
+        for(let i=0;i<2200;i++){
           const x=Math.random()*patternWidth, y=Math.random()*outH;
-          pctx.fillStyle=`hsl(${Math.random()*60+200}, 70%, 60%)`;
-          pctx.fillRect(x,y,2,2);
+          const v=Math.random()>0.5 ? 255 : Math.random()*40;
+          if(v===255){
+            pctx.fillStyle=`rgb(255,255,255)`;
+          } else {
+            pctx.fillStyle=`rgb(${v|0},${v|0},${v|0})`;
+          }
+          pctx.beginPath();
+          pctx.arc(x,y, Math.random()*1.3+0.5, 0, Math.PI*2);
+          pctx.fill();
+        }
+        for(let i=0;i<300;i++){
+          const x=Math.random()*patternWidth, y=Math.random()*outH;
+          pctx.fillStyle=`hsl(${Math.random()*60+200}, 75%, 62%)`;
+          pctx.fillRect(x,y,1.8,1.8);
         }
       } else if(patternType==='stripes'){
         for(let x=0;x<patternWidth;x++){
@@ -254,45 +277,26 @@ export function initStereogram(){
       const patternData=pctx.getImageData(0,0,patternWidth,outH).data;
 
       // Generate stereogram — 非累積方式で周期を一定に保ち、右側の崩壊を防ぐ
-      // シンプルなテスト用: ランダムドット + 中央の白い四角が浮かび上がるかでデバッグ可能
+      // 各ピクセルは常に基本周期 T を基準に shift する（累積参照をしない）
+      // shift(x,y) = round(D(x,y) * effectiveMaxDepth), px = (x - shift) mod T
       const out=ctx.createImageData(outW,outH);
       const outData=out.data;
       const effectiveMaxDepth = Math.min(maxDepth, Math.floor(patternWidth * 0.45));
-      // 深度マップの元画像の色（カラーモード用）— depthC と同じサイズで取得済みの depthData を流用
-      // depthData は深度（輝度）だが、useColor 時は元画像の色も必要なので、別途 depthImg の色を取得
-      let colorData=null;
-      if(useColor && depthImg && !useTextMode){
-        const colorC=document.createElement('canvas');
-        colorC.width=outW; colorC.height=outH;
-        const cctx=colorC.getContext('2d');
-        const ratio=Math.max(outW/depthImg.width, outH/depthImg.height);
-        const w=depthImg.width*ratio, h=depthImg.height*ratio;
-        cctx.drawImage(depthImg, (outW-w)/2, (outH-h)/2, w, h);
-        colorData=cctx.getImageData(0,0,outW,outH).data;
-      }
       for(let y=0;y<outH;y++){
         for(let x=0;x<outW;x++){
           const depthIdx=(y*outW+x)*4;
           const lum=getLum(depthData[depthIdx], depthData[depthIdx+1], depthData[depthIdx+2]);
           const depth = lum / 255;
           const shift = Math.round(depth * effectiveMaxDepth);
-          // 常に基本周期を基準にシフト（累積誤差を防ぐ）
+          // 常に基本周期 T を基準にシフト（累積誤差を防ぐ）— 境界は正しく剰余でループ
           let patternX = (x - shift) % patternWidth;
-          if(patternX < 0) patternX += patternWidth * Math.ceil(-patternX / patternWidth);
+          if(patternX < 0) patternX += patternWidth;
           const pi=(y*patternWidth + patternX)*4;
           const oi=(y*outW + x)*4;
-          if(useColor && colorData && depth > 0.25){
-            // カラー：深度が高い部分は元画像の色をパターンにブレンド
-            const alpha = Math.min(1, (depth - 0.25) / 0.75 * 0.7); // 0.25-1 => 0-0.7
-            const cr=colorData[depthIdx], cg=colorData[depthIdx+1], cb=colorData[depthIdx+2];
-            outData[oi]= patternData[pi] * (1-alpha) + cr * alpha;
-            outData[oi+1]= patternData[pi+1] * (1-alpha) + cg * alpha;
-            outData[oi+2]= patternData[pi+2] * (1-alpha) + cb * alpha;
-          } else {
-            outData[oi]=patternData[pi];
-            outData[oi+1]=patternData[pi+1];
-            outData[oi+2]=patternData[pi+2];
-          }
+          // カラーブレンドは破棄：搬送波自体が既に色サンプリング済みのため、視差情報をマスキングしない
+          outData[oi]=patternData[pi];
+          outData[oi+1]=patternData[pi+1];
+          outData[oi+2]=patternData[pi+2];
           outData[oi+3]=255;
         }
       }
